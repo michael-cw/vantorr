@@ -111,12 +111,15 @@ You can specify different layers (e.g., specific Vivid products) or CRS
 projections.
 
 ``` r
-basemap_vivid <- get_basemap(
-  bbox = my_bbox,
-  layers = "Maxar:Imagery",
+basemap <- get_maxar_wms_basemap(
+  bbox = bbox_3857,
+  token = token_response$access_token,
+  output_file = "denver_basemap.tif",
   cql_filter = "productName='VIVID_STANDARD_30'", # Filter for 30cm resolution
   crs = "EPSG:4326"
 )
+raster <- terra::rast(basemap)
+terra::plot(raster)
 ```
 
 ## Roadmap
