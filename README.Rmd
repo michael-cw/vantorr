@@ -1,0 +1,131 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, eval = F,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# vantorr
+
+<!-- badges: start -->
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+<!-- badges: end -->
+
+The `vantorr` package provides a lightweight R interface to the [Vantor Streaming - Basemap API](https://developers.maxar.com/docs/streaming-basemap/guides/basemap-api-guide). It allows users to retrieve high-resolution satellite imagery (Vivid Mosaic) by simply providing a bounding box and authentication credentials.
+
+## Installation
+
+You can install the development version of vantorr from [GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("yourusername/vantorr")
+```
+
+## Authentication
+
+The Vantor API supports two methods of authentication: **API Key** and **Bearer Token**. This package supports both.
+
+### Option 1: API Key (Recommended for long-term scripts)
+
+API keys are long-lived (up to 180 days). You can pass your key directly to the functions or set it as an environment variable.
+
+
+### Option 2: Bearer Token (OAuth 2.0)
+
+Bearer tokens are short-lived and generally used for session-based access.
+
+```{r bearer_tok}
+# Get a token
+token_response <- get_maxar_token("your_email@example.com", "your_password")
+
+
+```
+
+
+## Usage
+
+### 1. Setup and Libraries
+
+```{r setup, message=FALSE, warning=FALSE}
+library(vantorr)
+library(sf)
+library(terra)
+library(httr2)
+```
+
+### 2. Define a Bounding Box
+
+You can define a bounding box using `sf` or a simple named vector. The API requires coordinates in EPSG:4326 (WGS84).
+
+```{r bbox_example}
+# Example: A bounding box around the National Mall in Washington D.C.
+# Order: xmin (lon), ymin (lat), xmax (lon), ymax (lat)
+my_bbox <- st_bbox(c(xmin = -77.040, ymin = 38.888, xmax = -77.030, ymax = 38.892), 
+                   crs = st_crs(4326))
+
+print(my_bbox)
+```
+
+### 3. Fetching the Basemap
+
+Use the `get_basemap()` function (hypothetical main function) to download the imagery. This function handles the WMS 1.3.0 axis ordering quirks and API headers automatically.
+
+#### Using API Key
+
+```{r api_key_example, eval=FALSE}
+# Retrieve map using API Key
+basemap <- get_maxar_wms_basemap(
+  bbox = bbox_3857,
+  key = api_key,
+  output_file = "denver_basemap.tif"
+)
+
+raster <- terra::rast(tif_file)
+terra::plot(raster)
+```
+
+#### Using Bearer Token
+
+```{r token_example, eval=FALSE}
+# Retrieve map using Bearer Token
+basemap <- get_maxar_wms_basemap(
+  bbox = bbox_3857,
+  token = token_response$access_token,
+  output_file = "denver_basemap.tif"
+)
+
+raster <- terra::rast(tif_file)
+terra::plot(raster)
+```
+
+### 4. Customizing the Request
+
+You can specify different layers (e.g., specific Vivid products) or CRS projections.
+
+```{r customization, eval=FALSE}
+basemap_vivid <- get_basemap(
+  bbox = my_bbox,
+  layers = "Maxar:Imagery",
+  cql_filter = "productName='VIVID_STANDARD_30'", # Filter for 30cm resolution
+  crs = "EPSG:4326"
+)
+```
+
+## Roadmap
+
+- [ ] Add support for WMTS (Tiled Service) for faster interactive mapping.
+- [ ] Implement `get_seamlines()` to retrieve metadata boundaries.
+- [ ] Add support for `stars` objects.
+
+## License
+
+MIT
