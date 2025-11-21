@@ -23,7 +23,7 @@ You can install the development version of vantorr from
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("yourusername/vantorr")
+devtools::install_github("michael-cw/vantorr")
 ```
 
 ## Authentication
