@@ -53,7 +53,7 @@ token_response <- get_maxar_token("your_email@example.com", "your_password")
 
 # Define bounding box in EPSG:3857 (Web Mercator)
 # Example: Area around Denver, Colorado
-bbox_3857 <- c(-11700000, 4830000, -11690000, 4840000)
+bbox_3857 <- c(-11699050, 4837950, -11698050, 4838950)  # 1000m x 1000m
 
 # Retrieve basemap as GeoTIFF
 tif_file <- get_maxar_wms_basemap(
@@ -64,7 +64,8 @@ tif_file <- get_maxar_wms_basemap(
 
 # Load the resulting GeoTIFF
 raster <- terra::rast(tif_file)
-terra::plot(raster)
+terra::plotRGB(raster, r = 1, g = 2, b = 3, stretch = "lin",
+main = "Denver, Colorado - 1000m × 1000m (30cm resolution)")
 }
 
 }
