@@ -59,19 +59,35 @@
 </h1></div>
 <!-- badges: start -->
 
-<p>The <code>vantorr</code> package provides an R interface to the <a href="https://developers.maxar.com/docs/" class="external-link">Maxar / Vantor Hub APIs</a>, enabling programmatic access to high-resolution satellite imagery (such as Vivid Mosaic basemaps, WorldView archives, and analysis-ready data). It natively integrates with <code>sf</code>, <code>terra</code>, and <code>stars</code>.</p>
+<p>The <code>vantorr</code> package provides an R interface to the <a href="https://developers.maxar.com/docs/" class="external-link">Maxar / Vantor Hub APIs</a>, enabling programmatic access to high-resolution satellite imagery (such as Vivid Mosaic basemaps, WorldView archives, and analysis-ready data). It natively integrates with <code>sf</code>, <code>terra</code>, <code>stars</code>, <code>leaflet</code>, and <code>shiny</code>.</p>
+<div class="section level2">
+<h2 id="key-features">Key Features<a class="anchor" aria-label="anchor" href="#key-features"></a>
+</h2>
+<ul>
+<li>
+<strong>Flexible Authentication</strong>: Session credential management via API Keys (<code>maxar-api-key</code>) or OAuth 2.0 Bearer Tokens (<code><a href="reference/vantor_auth.html">vantor_auth()</a></code>) with automatic token caching and refresh.</li>
+<li>
+<strong>Multi-Package Spatial Dispatch</strong>: Pass <code>sf</code>, <code>terra</code> (<code>SpatRaster</code>, <code>SpatVector</code>, <code>SpatExtent</code>), or <code>stars</code> objects to any spatial query via <code><a href="reference/vantor_as_bbox.html">vantor_as_bbox()</a></code>, and receive outputs as GeoTIFF files, <code>SpatRaster</code>, or <code>stars</code> objects.</li>
+<li>
+<strong>Basemaps, Tiling &amp; Seamline Metadata</strong>: Download Vivid 30 cm / 15 cm GeoTIFFs (<code><a href="reference/get_maxar_wms_basemap.html">get_maxar_wms_basemap()</a></code>), automatically tile and mosaic large areas (<code><a href="reference/get_maxar_wms_tiles.html">get_maxar_wms_tiles()</a></code>), and retrieve vector seamline polygons with acquisition dates and sensor metadata via OGC WFS (<code><a href="reference/vantor_get_seamlines.html">vantor_get_seamlines()</a></code>).</li>
+<li>
+<strong>Account Quota Monitoring</strong>: Query credit limits and consumption breakdowns via the Usage API v2 (<code><a href="reference/vantor_get_usage.html">vantor_get_usage()</a></code>).</li>
+<li>
+<strong>Interactive <code>leaflet</code> &amp; <code>shiny</code> Integration</strong>: Stream WMTS/WMS basemaps, seamlines, and archive strips in <code>leaflet</code> (<code><a href="reference/add_vantor_basemap.html">add_vantor_basemap()</a></code>, <code><a href="reference/add_vantor_seamlines.html">add_vantor_seamlines()</a></code>, <code><a href="reference/add_vantor_imagery.html">add_vantor_imagery()</a></code>), or embed drop-in Shiny modules (<code><a href="reference/vantor_auth_ui.html">vantor_auth_ui()</a></code>, <code><a href="reference/vantor_explorer_ui.html">vantor_explorer_ui()</a></code>, <code><a href="reference/run_vantor_demo_app.html">run_vantor_demo_app()</a></code>).</li>
+</ul>
+</div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p>You can install the development version of <code>vantorr</code> from <a href="https://github.com/michael-cw/vantorr" class="external-link">GitHub</a> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"michael-cw/vantorr"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"michael-cw/vantorr, build_vignettes = TRUE"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="authentication">Authentication<a class="anchor" aria-label="anchor" href="#authentication"></a>
 </h2>
-<p>The Vantor API supports both <strong>API Keys</strong> (long-lived, up to 180 days) and <strong>OAuth 2.0 Bearer Tokens</strong> (session-based, with automatic refresh).</p>
+<p>The Vantor API supports both <strong>API Keys</strong> (long-lived, up to 180 days; required for browser-based <code>leaflet</code> tile streaming) and <strong>OAuth 2.0 Bearer Tokens</strong> (session-based, with automatic refresh).</p>
 <p>You can configure credentials in your <code>.Renviron</code> file (<code>VANTOR_API_KEY</code>, or <code>VANTOR_USERNAME</code> and <code>VANTOR_PASSWORD</code>) or set them interactively for your R session with <code><a href="reference/vantor_auth.html">vantor_auth()</a></code>:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/michael-cw/vantorr" class="external-link">vantorr</a></span><span class="op">)</span></span>
@@ -80,10 +96,13 @@
 <span><span class="fu"><a href="reference/vantor_auth.html">vantor_auth</a></span><span class="op">(</span>api_key <span class="op">=</span> <span class="st">"your_api_key"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Option 2: Authenticate via OAuth2 (automatically caches and refreshes tokens)</span></span>
-<span><span class="fu"><a href="reference/vantor_auth.html">vantor_auth</a></span><span class="op">(</span>username <span class="op">=</span> <span class="st">"your_email@example.com"</span>, password <span class="op">=</span> <span class="st">"your_password"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="reference/vantor_auth.html">vantor_auth</a></span><span class="op">(</span>username <span class="op">=</span> <span class="st">"your_email@example.com"</span>, password <span class="op">=</span> <span class="st">"your_password"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Check account credit usage and quota</span></span>
+<span><span class="va">usage</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/vantor_get_usage.html">vantor_get_usage</a></span><span class="op">(</span>category <span class="op">=</span> <span class="st">"PRODUCT"</span>, unit <span class="op">=</span> <span class="st">"CREDIT"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+<h2 id="retrieving-wms-basemaps--seamlines">Retrieving WMS Basemaps &amp; Seamlines<a class="anchor" aria-label="anchor" href="#retrieving-wms-basemaps--seamlines"></a>
 </h2>
 <p><code>vantorr</code> accepts spatial objects from <code>sf</code>, <code>terra</code>, and <code>stars</code> (as well as numeric bounding boxes in <code>EPSG:4326</code> or <code>EPSG:3857</code>) and automatically transforms coordinates to the required projection.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -105,7 +124,10 @@
 <span>  return_type <span class="op">=</span> <span class="st">"SpatRaster"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plotRGB.html" class="external-link">plotRGB</a></span><span class="op">(</span><span class="va">basemap_rast</span>, r <span class="op">=</span> <span class="fl">1</span>, g <span class="op">=</span> <span class="fl">2</span>, b <span class="op">=</span> <span class="fl">3</span>, stretch <span class="op">=</span> <span class="st">"lin"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">terra</span><span class="fu">::</span><span class="fu"><a href="https://rspatial.github.io/terra/reference/plotRGB.html" class="external-link">plotRGB</a></span><span class="op">(</span><span class="va">basemap_rast</span>, r <span class="op">=</span> <span class="fl">1</span>, g <span class="op">=</span> <span class="fl">2</span>, b <span class="op">=</span> <span class="fl">3</span>, stretch <span class="op">=</span> <span class="st">"lin"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Fetch vector seamline polygons and acquisition timestamps (OGC WFS)</span></span>
+<span><span class="va">seamlines_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/vantor_get_seamlines.html">vantor_get_seamlines</a></span><span class="op">(</span>bbox <span class="op">=</span> <span class="va">aoi</span>, product <span class="op">=</span> <span class="st">"VIVID_STANDARD_30"</span><span class="op">)</span></span></code></pre></div>
 <p>For larger areas of interest that exceed single-request pixel limits, use <code><a href="reference/get_maxar_wms_tiles.html">get_maxar_wms_tiles()</a></code> to automatically grid, download, and mosaic tiles:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">large_mosaic</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/get_maxar_wms_tiles.html">get_maxar_wms_tiles</a></span><span class="op">(</span></span>
@@ -119,7 +141,7 @@
 <div class="section level2">
 <h2 id="interactive-leaflet-maps--r-shiny-modules">Interactive <code>leaflet</code> Maps &amp; R Shiny Modules<a class="anchor" aria-label="anchor" href="#interactive-leaflet-maps--r-shiny-modules"></a>
 </h2>
-<p>Stream Vantor Vivid mosaics (<code>WMTS</code> or <code>WMS</code>), seamline cutlines, and archive strips directly into <code>leaflet</code> maps, or launch the built-in interactive Shiny explorer app:</p>
+<p>Stream Vantor Vivid mosaics (<code>WMTS</code> or <code>WMS</code>), seamline cutlines (<code>mode = "wms"</code> or interactive <code>mode = "wfs"</code> polygons), and archive strips directly into <code>leaflet</code> maps, or embed the pre-built Shiny modules (<code><a href="reference/vantor_auth_ui.html">vantor_auth_ui()</a></code> and <code><a href="reference/vantor_explorer_ui.html">vantor_explorer_ui()</a></code>):</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rstudio.github.io/leaflet/" class="external-link">leaflet</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/michael-cw/vantorr" class="external-link">vantorr</a></span><span class="op">)</span></span>
@@ -137,7 +159,7 @@
 <span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="reference/run_vantor_demo_app.html">run_vantor_demo_app</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>See <code><a href="articles/shiny-leaflet-integration.html">vignette("shiny-leaflet-integration", package = "vantorr")</a></code> for a complete guide to building custom <code>leaflet</code> + <code>shiny</code> applications and using the drop-in <code><a href="reference/vantor_auth_ui.html">vantor_auth_ui()</a></code> and <code><a href="reference/vantor_explorer_ui.html">vantor_explorer_ui()</a></code> Shiny modules.</p>
+<p>See <code><a href="articles/shiny-leaflet-integration.html">vignette("shiny-leaflet-integration", package = "vantorr")</a></code> or visit the <a href="https://michael-cw.github.io/vantorr/">companion website</a> for a complete guide to building custom <code>leaflet</code> + <code>shiny</code> applications.</p>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>

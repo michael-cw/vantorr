@@ -4,7 +4,40 @@ The `vantorr` package provides an R interface to the [Maxar / Vantor Hub
 APIs](https://developers.maxar.com/docs/), enabling programmatic access
 to high-resolution satellite imagery (such as Vivid Mosaic basemaps,
 WorldView archives, and analysis-ready data). It natively integrates
-with `sf`, `terra`, and `stars`.
+with `sf`, `terra`, `stars`, `leaflet`, and `shiny`.
+
+## Key Features
+
+- **Flexible Authentication**: Session credential management via API
+  Keys (`maxar-api-key`) or OAuth 2.0 Bearer Tokens
+  ([`vantor_auth()`](https://michael-cw.github.io/vantorr/reference/vantor_auth.md))
+  with automatic token caching and refresh.
+- **Multi-Package Spatial Dispatch**: Pass `sf`, `terra` (`SpatRaster`,
+  `SpatVector`, `SpatExtent`), or `stars` objects to any spatial query
+  via
+  [`vantor_as_bbox()`](https://michael-cw.github.io/vantorr/reference/vantor_as_bbox.md),
+  and receive outputs as GeoTIFF files, `SpatRaster`, or `stars`
+  objects.
+- **Basemaps, Tiling & Seamline Metadata**: Download Vivid 30 cm / 15 cm
+  GeoTIFFs
+  ([`get_maxar_wms_basemap()`](https://michael-cw.github.io/vantorr/reference/get_maxar_wms_basemap.md)),
+  automatically tile and mosaic large areas
+  ([`get_maxar_wms_tiles()`](https://michael-cw.github.io/vantorr/reference/get_maxar_wms_tiles.md)),
+  and retrieve vector seamline polygons with acquisition dates and
+  sensor metadata via OGC WFS
+  ([`vantor_get_seamlines()`](https://michael-cw.github.io/vantorr/reference/vantor_get_seamlines.md)).
+- **Account Quota Monitoring**: Query credit limits and consumption
+  breakdowns via the Usage API v2
+  ([`vantor_get_usage()`](https://michael-cw.github.io/vantorr/reference/vantor_get_usage.md)).
+- **Interactive `leaflet` & `shiny` Integration**: Stream WMTS/WMS
+  basemaps, seamlines, and archive strips in `leaflet`
+  ([`add_vantor_basemap()`](https://michael-cw.github.io/vantorr/reference/add_vantor_basemap.md),
+  [`add_vantor_seamlines()`](https://michael-cw.github.io/vantorr/reference/add_vantor_seamlines.md),
+  [`add_vantor_imagery()`](https://michael-cw.github.io/vantorr/reference/add_vantor_imagery.md)),
+  or embed drop-in Shiny modules
+  ([`vantor_auth_ui()`](https://michael-cw.github.io/vantorr/reference/vantor_auth_ui.md),
+  [`vantor_explorer_ui()`](https://michael-cw.github.io/vantorr/reference/vantor_explorer_ui.md),
+  [`run_vantor_demo_app()`](https://michael-cw.github.io/vantorr/reference/run_vantor_demo_app.md)).
 
 ## Installation
 
@@ -14,13 +47,14 @@ You can install the development version of `vantorr` from
 ``` r
 
 # install.packages("devtools")
-devtools::install_github("michael-cw/vantorr")
+devtools::install_github("michael-cw/vantorr, build_vignettes = TRUE")
 ```
 
 ## Authentication
 
-The Vantor API supports both **API Keys** (long-lived, up to 180 days)
-and **OAuth 2.0 Bearer Tokens** (session-based, with automatic refresh).
+The Vantor API supports both **API Keys** (long-lived, up to 180 days;
+required for browser-based `leaflet` tile streaming) and **OAuth 2.0
+Bearer Tokens** (session-based, with automatic refresh).
 
 You can configure credentials in your `.Renviron` file
 (`VANTOR_API_KEY`, or `VANTOR_USERNAME` and `VANTOR_PASSWORD`) or set
@@ -36,9 +70,12 @@ vantor_auth(api_key = "your_api_key")
 
 # Option 2: Authenticate via OAuth2 (automatically caches and refreshes tokens)
 vantor_auth(username = "your_email@example.com", password = "your_password")
+
+# Check account credit usage and quota
+usage <- vantor_get_usage(category = "PRODUCT", unit = "CREDIT")
 ```
 
-## Usage
+## Retrieving WMS Basemaps & Seamlines
 
 `vantorr` accepts spatial objects from `sf`, `terra`, and `stars` (as
 well as numeric bounding boxes in `EPSG:4326` or `EPSG:3857`) and
@@ -65,6 +102,9 @@ basemap_rast <- get_maxar_wms_basemap(
 )
 
 terra::plotRGB(basemap_rast, r = 1, g = 2, b = 3, stretch = "lin")
+
+# Fetch vector seamline polygons and acquisition timestamps (OGC WFS)
+seamlines_sf <- vantor_get_seamlines(bbox = aoi, product = "VIVID_STANDARD_30")
 ```
 
 For larger areas of interest that exceed single-request pixel limits,
@@ -85,9 +125,13 @@ large_mosaic <- get_maxar_wms_tiles(
 
 ## Interactive `leaflet` Maps & R Shiny Modules
 
-Stream Vantor Vivid mosaics (`WMTS` or `WMS`), seamline cutlines, and
-archive strips directly into `leaflet` maps, or launch the built-in
-interactive Shiny explorer app:
+Stream Vantor Vivid mosaics (`WMTS` or `WMS`), seamline cutlines
+(`mode = "wms"` or interactive `mode = "wfs"` polygons), and archive
+strips directly into `leaflet` maps, or embed the pre-built Shiny
+modules
+([`vantor_auth_ui()`](https://michael-cw.github.io/vantorr/reference/vantor_auth_ui.md)
+and
+[`vantor_explorer_ui()`](https://michael-cw.github.io/vantorr/reference/vantor_explorer_ui.md)):
 
 ``` r
 
@@ -111,12 +155,9 @@ if (interactive()) {
 
 See
 [`vignette("shiny-leaflet-integration", package = "vantorr")`](https://michael-cw.github.io/vantorr/articles/shiny-leaflet-integration.md)
-for a complete guide to building custom `leaflet` + `shiny` applications
-and using the drop-in
-[`vantor_auth_ui()`](https://michael-cw.github.io/vantorr/reference/vantor_auth_ui.md)
-and
-[`vantor_explorer_ui()`](https://michael-cw.github.io/vantorr/reference/vantor_explorer_ui.md)
-Shiny modules.
+or visit the [companion website](https://michael-cw.github.io/vantorr/)
+for a complete guide to building custom `leaflet` + `shiny`
+applications.
 
 ## License
 
