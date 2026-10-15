@@ -1,0 +1,83 @@
+url: https://michael-cw.github.io/vantorr/
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#0054AD"
+    border-radius: 0.375rem
+    btn-border-radius: 0.25rem
+
+home:
+  title: "vantorr: Access Vantor and Maxar Satellite Imagery APIs in R"
+  description: >
+    Programmatic access to Vantor and Maxar Hub APIs in R, with native support
+    for sf, terra, stars, interactive leaflet web maps, and drop-in R Shiny
+    application modules.
+  links:
+    - text: Vantor / Maxar API Documentation
+      href: https://developers.maxar.com/docs/
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news]
+    right: [search, github]
+  components:
+    articles:
+      text: Articles
+      menu:
+        - text: Interactive Leaflet Maps and Shiny Apps
+          href: articles/shiny-leaflet-integration.html
+
+reference:
+  - title: Authentication & Account Usage
+    desc: >
+      Manage session credentials via API keys or OAuth2 bearer tokens (with
+      automatic refresh) and monitor account activation credit usage.
+    contents:
+      - vantor_auth
+      - vantor_has_auth
+      - vantor_auth_clear
+      - get_maxar_token
+      - refresh_maxar_token
+      - create_maxar_request
+      - vantor_get_usage
+
+  - title: WMS Basemaps & Seamlines
+    desc: >
+      Retrieve high-resolution Vivid Mosaic GeoTIFFs, multi-tile mosaics, and
+      vector seamline polygons with acquisition metadata.
+    contents:
+      - get_maxar_wms_basemap
+      - get_maxar_wms_tiles
+      - vantor_get_seamlines
+
+  - title: Interactive Mapping (leaflet)
+    desc: >
+      Stream Vantor Vivid mosaics, seamline overlays, and archive strips
+      directly into interactive leaflet web maps.
+    contents:
+      - vantor_wmts_url
+      - add_vantor_basemap
+      - addVantorBasemap
+      - add_vantor_seamlines
+      - addVantorSeamlines
+      - add_vantor_imagery
+      - addVantorImagery
+
+  - title: R Shiny Application Modules
+    desc: >
+      Drop-in, namespace-safe Shiny UI and server modules for authentication,
+      interactive AOI selection, seamline inspection, and GeoTIFF export.
+    contents:
+      - vantor_auth_ui
+      - vantor_auth_server
+      - vantor_explorer_ui
+      - vantor_explorer_server
+      - run_vantor_demo_app
+
+  - title: Spatial Dispatch & Coordinate Helpers
+    desc: >
+      S3 bounding box coercion across sf, terra, and stars spatial classes.
+    contents:
+      - vantor_as_bbox
+      - convert_bbox_to_3857

@@ -13,6 +13,7 @@ get_maxar_wms_tiles(
   merge_tiles = TRUE,
   final_output = tempfile(pattern = "vantor_merged_", fileext = ".tif"),
   return_type = c("file", "SpatRaster", "stars", "stars_proxy"),
+  progress_callback = NULL,
   verbose = getOption("vantorr.verbose", TRUE),
   ...
 )
@@ -38,6 +39,9 @@ Defaults to \code{tempfile(pattern = "vantor_merged_", fileext = ".tif")}.}
 
 \item{return_type}{Character string. One of \code{"file"}, \code{"SpatRaster"},
 \code{"stars"}, or \code{"stars_proxy"}.}
+
+\item{progress_callback}{Optional function taking \verb{(i, n_tiles)} called
+after each tile download (useful for integrating with \code{shiny::incProgress()}).}
 
 \item{verbose}{Logical. Print progress messages. Default is
 \code{getOption("vantorr.verbose", TRUE)}.}

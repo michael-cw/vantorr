@@ -254,6 +254,8 @@ convert_bbox_to_3857 <- function(bbox_4326) {
 #'   Defaults to `tempfile(pattern = "vantor_merged_", fileext = ".tif")`.
 #' @param return_type Character string. One of `"file"`, `"SpatRaster"`,
 #'   `"stars"`, or `"stars_proxy"`.
+#' @param progress_callback Optional function taking `(i, n_tiles)` called
+#'   after each tile download (useful for integrating with `shiny::incProgress()`).
 #' @param verbose Logical. Print progress messages. Default is
 #'   `getOption("vantorr.verbose", TRUE)`.
 #' @param ... Additional arguments passed to [get_maxar_wms_basemap()].
@@ -287,6 +289,7 @@ get_maxar_wms_tiles <- function(bbox,
                                 merge_tiles = TRUE,
                                 final_output = tempfile(pattern = "vantor_merged_", fileext = ".tif"),
                                 return_type = c("file", "SpatRaster", "stars", "stars_proxy"),
+                                progress_callback = NULL,
                                 verbose = getOption("vantorr.verbose", TRUE),
                                 ...) {
 
@@ -346,6 +349,9 @@ get_maxar_wms_tiles <- function(bbox,
     }
 
     tile_files[i] <- tile_file
+    if (is.function(progress_callback)) {
+      progress_callback(i, n_tiles)
+    }
   }
 
   if (isTRUE(merge_tiles) && length(tile_files) > 1L) {

@@ -85,6 +85,32 @@ large_mosaic <- get_maxar_wms_tiles(
 )
 ```
 
+## Interactive `leaflet` Maps & R Shiny Modules
+
+Stream Vantor Vivid mosaics (`WMTS` or `WMS`), seamline cutlines, and archive strips directly into `leaflet` maps, or launch the built-in interactive Shiny explorer app:
+
+```{r shiny_example}
+library(leaflet)
+library(vantorr)
+
+# Stream Vantor Vivid 30cm WMTS tiles and seamlines in Leaflet
+leaflet() |>
+  setView(lng = -104.995, lat = 39.740, zoom = 15) |>
+  add_vantor_basemap(
+    product = "VIVID_STANDARD_30",
+    service = "WMTS",
+    show_seamlines = TRUE
+  )
+
+# Launch the interactive Shiny Explorer demo app
+if (interactive()) {
+  run_vantor_demo_app()
+}
+```
+
+See `vignette("shiny-leaflet-integration", package = "vantorr")` for a complete guide to building custom `leaflet` + `shiny` applications and using the drop-in `vantor_auth_ui()` and `vantor_explorer_ui()` Shiny modules.
+
 ## License
 
 MIT
+
