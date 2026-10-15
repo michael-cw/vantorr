@@ -7,23 +7,20 @@
 convert_bbox_to_3857(bbox_4326)
 }
 \arguments{
-\item{bbox_4326}{Numeric vector of length 4 with bounding box in EPSG:4326
-Format: c(lon_min, lat_min, lon_max, lat_max)}
+\item{bbox_4326}{Numeric vector of length 4 (\code{c(lon_min, lat_min, lon_max, lat_max)})
+or any spatial object supported by \code{\link[=vantor_as_bbox]{vantor_as_bbox()}}.}
 }
 \value{
-Numeric vector of length 4 with bounding box in EPSG:3857
-Format: c(x_min, y_min, x_max, y_max)
+Numeric vector of length 4 with bounding box coordinates in \code{EPSG:3857}:
+\code{c(x_min, y_min, x_max, y_max)}.
 }
 \description{
-Helper function to convert a bounding box from EPSG:4326 (lat/lon) to EPSG:3857 (Web Mercator)
+Helper function to convert a bounding box or spatial object from \code{EPSG:4326}
+(lat/lon) to \code{EPSG:3857} (Web Mercator).
 }
 \examples{
-\dontrun{
 # Denver area in lat/lon
 bbox_latlon <- c(-105.01, 39.72, -104.96, 39.75)
-
-# Convert to Web Mercator
 bbox_mercator <- convert_bbox_to_3857(bbox_latlon)
-}
 
 }

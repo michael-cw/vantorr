@@ -1,118 +1,149 @@
-#' Get Maxar WMS Basemap as GeoTIFF
+#' Get Maxar / Vantor WMS Basemap as GeoTIFF or Spatial Raster Object
 #'
-#' This function retrieves a Maxar Vivid Mosaic 30 cm basemap as a GeoTIFF file
-#' for a specified bounding box in EPSG:3857 (Web Mercator) projection.
+#' Retrieves a Maxar/Vantor Vivid Mosaic basemap (30 cm or 15 cm) via OGC WMS
+#' for a specified area of interest. Supports spatial inputs from `sf`, `terra`,
+#' and `stars`, as well as numeric bounding boxes, and can return a file path,
+#' `terra::SpatRaster`, or `stars` object.
 #'
-#' @param bbox Numeric vector of length 4 with bounding box coordinates in EPSG:3857
-#'              Format: c(xmin, ymin, xmax, ymax)
-#' @param token Character string. Bearer token from get_maxar_token() function
+#' @param bbox A spatial object (`sf`, `sfc`, `bbox`, `SpatRaster`, `SpatVector`,
+#'   `SpatExtent`, `stars`, `stars_proxy`) or a numeric vector of length 4:
+#'   `c(xmin, ymin, xmax, ymax)`. Automatically transformed to the target `crs`.
+#' @param token Character string. Optional OAuth2 bearer token from `get_maxar_token()`.
+#'   If `NULL`, resolved via `api_key`, session cache (`vantor_auth()`), or
+#'   environment variables.
 #' @param output_file Character string. Path where the GeoTIFF file will be saved.
-#'                    Default is "maxar_basemap.tif"
-#' @param width Integer. Width of the output image in pixels. If NULL, calculated from resolution.
-#' @param height Integer. Height of the output image in pixels. If NULL, calculated from resolution.
-#' @param resolution Numeric. Target resolution in meters. Default is 0.3 (30 cm).
-#'                   Used to calculate width/height if not provided.
-#' @param product Character string. Vivid product name. Default is "VIVID_STANDARD_30".
-#'                Options: "VIVID_STANDARD_30", "VIVID_ADVANCED_15"
-#' @param shoreline_masking Logical. Apply shoreline masking. Default is FALSE.
-#' @param verbose Logical. Print progress messages. Default is TRUE.
+#'   Defaults to `tempfile(pattern = "vantor_basemap_", fileext = ".tif")` in
+#'   compliance with CRAN policies.
+#' @param width Integer. Width of the output image in pixels. If `NULL`, calculated
+#'   from `resolution`.
+#' @param height Integer. Height of the output image in pixels. If `NULL`, calculated
+#'   from `resolution`.
+#' @param resolution Numeric. Target ground resolution in meters. Default is `0.3` (30 cm).
+#'   Used to calculate `width` and `height` if not explicitly provided.
+#' @param product Character string. Vivid product name. Default is `"VIVID_STANDARD_30"`.
+#'   Options include `"VIVID_STANDARD_30"` and `"VIVID_ADVANCED_15"`.
+#' @param crs Character string. Output CRS requested from WMS (`"EPSG:3857"` or
+#'   `"EPSG:4326"`). Default is `"EPSG:3857"`.
+#' @param cql_filter Character string. Optional custom CQL filter. If `NULL`,
+#'   constructed automatically from `product` and `shoreline_masking`.
+#' @param shoreline_masking Logical. Apply shoreline masking. Default is `FALSE`.
+#' @param api_key Character string. Optional Maxar/Vantor API key (`maxar-api-key`).
+#' @param return_type Character string. Return format: `"file"` (default, returns
+#'   the file path invisibly), `"SpatRaster"` (returns a `terra::SpatRaster`),
+#'   `"stars"` (returns an in-memory `stars` object), or `"stars_proxy"`.
+#' @param verbose Logical. Print progress messages. Default is
+#'   `getOption("vantorr.verbose", TRUE)`.
 #'
-#' @return The path to the saved GeoTIFF file (invisibly)
+#' @return Depending on `return_type`, the path to the saved GeoTIFF file
+#'   (invisibly when `return_type = "file"`), a `SpatRaster`, or a `stars` object.
+#'   Returns `NULL` invisibly (with an informative message) if the API request fails.
 #'
 #' @examples
-#' \dontrun{
-#' # Get authentication token first
-#' token_response <- get_maxar_token("your_email@example.com", "your_password")
+#' \donttest{
+#' if (vantor_has_auth()) {
+#'   # Define area of interest using an sf bounding box (WGS84)
+#'   aoi <- sf::st_bbox(
+#'     c(xmin = -105.005, ymin = 39.735, xmax = -105.000, ymax = 39.740),
+#'     crs = sf::st_crs(4326)
+#'   )
 #'
-#' # Define bounding box in EPSG:3857 (Web Mercator)
-#' # Example: Area around Denver, Colorado
-#' bbox_3857 <- c(-11699050, 4837950, -11698050, 4838950)  # 1000m x 1000m
-#'
-#' # Retrieve basemap as GeoTIFF
-#' tif_file <- get_maxar_wms_basemap(
-#'   bbox = bbox_3857,
-#'   token = token_response$access_token,
-#'   output_file = "denver_basemap.tif"
-#' )
-#'
-#' # Load the resulting GeoTIFF
-#' raster <- terra::rast(tif_file)
-#' terra::plotRGB(raster, r = 1, g = 2, b = 3, stretch = "lin",
-#' main = "Denver, Colorado - 1000m × 1000m (30cm resolution)")
+#'   # Retrieve basemap to a temporary GeoTIFF file
+#'   tif_file <- get_maxar_wms_basemap(
+#'     bbox = aoi,
+#'     resolution = 0.5,
+#'     verbose = FALSE
+#'   )
+#' }
 #' }
 #'
 #' @export
 get_maxar_wms_basemap <- function(bbox,
-                                  token,
-                                  output_file = "maxar_basemap.tif",
+                                  token = NULL,
+                                  output_file = tempfile(pattern = "vantor_basemap_", fileext = ".tif"),
                                   width = NULL,
                                   height = NULL,
                                   resolution = 0.3,
                                   product = "VIVID_STANDARD_30",
+                                  crs = c("EPSG:3857", "EPSG:4326"),
+                                  cql_filter = NULL,
                                   shoreline_masking = FALSE,
-                                  verbose = TRUE) {
+                                  api_key = NULL,
+                                  return_type = c("file", "SpatRaster", "stars", "stars_proxy"),
+                                  verbose = getOption("vantorr.verbose", TRUE)) {
 
-  # Validate inputs
-  if (missing(bbox) || missing(token)) {
-    stop("Both bbox and token are required")
+  if (missing(bbox) || is.null(bbox)) {
+    cli::cli_abort("{.arg bbox} is required.")
   }
 
-  if (length(bbox) != 4) {
-    stop("bbox must be a vector of length 4: c(xmin, ymin, xmax, ymax)")
-  }
+  crs <- match.arg(crs)
+  return_type <- match.arg(return_type)
 
-  # Calculate image dimensions if not provided
+  # Resolve authentication (supports explicit token, api_key, or session/env vars)
+  auth <- .resolve_auth(token = token, api_key = api_key, verbose = verbose)
+
+  # Compute metric extent in EPSG:3857 for accurate pixel dimension calculations
+  bbox_3857 <- as.numeric(vantor_as_bbox(bbox, target_crs = 3857))
+
   if (is.null(width) || is.null(height)) {
-    # Calculate extent in meters
-    x_extent <- bbox[3] - bbox[1]
-    y_extent <- bbox[4] - bbox[2]
-
-    # Calculate pixels needed for target resolution
-    width <- as.integer(abs(x_extent) / resolution)
-    height <- as.integer(abs(y_extent) / resolution)
-
-    if (verbose) {
-      cli::cli_alert_info(sprintf("Calculated image dimensions: %d x %d pixels\n", width, height))
-      cli::cli_alert_info(sprintf("For %.2f m resolution over %.1f x %.1f meters\n",
-                                  resolution, x_extent, y_extent))
+    if (!is.numeric(resolution) || length(resolution) != 1L || resolution <= 0) {
+      cli::cli_abort("{.arg resolution} must be a single positive number in meters.")
     }
 
-    # Limit maximum dimensions to prevent excessive file sizes
-    max_dim <- 8192
+    x_extent <- abs(bbox_3857[3] - bbox_3857[1])
+    y_extent <- abs(bbox_3857[4] - bbox_3857[2])
+
+    width <- max(1L, as.integer(round(x_extent / resolution)))
+    height <- max(1L, as.integer(round(y_extent / resolution)))
+
+    if (verbose) {
+      cli::cli_alert_info(
+        "Calculated image dimensions: {width} x {height} pixels ({round(x_extent, 1)} x {round(y_extent, 1)} m at {resolution} m resolution)."
+      )
+    }
+
+    max_dim <- 8192L
     if (width > max_dim || height > max_dim) {
       scale_factor <- min(max_dim / width, max_dim / height)
-      width <- as.integer(width * scale_factor)
-      height <- as.integer(height * scale_factor)
+      width <- max(1L, as.integer(round(width * scale_factor)))
+      height <- max(1L, as.integer(round(height * scale_factor)))
 
       if (verbose) {
-        cli::cli_alert_info(sprintf("Dimensions limited to: %d x %d pixels (max: %d)\n",
-                                    width, height, max_dim))
+        cli::cli_alert_warning(
+          "Dimensions capped at: {width} x {height} pixels (max: {max_dim}). Use {.fn get_maxar_wms_tiles} for larger areas."
+        )
       }
     }
   }
 
-  # WMS endpoint
-  wms_url <- "https://api.maxar.com/basemaps/v1/ogc/wms"
-
-  # Build CQL filter
-  cql_filter <- sprintf("productName='%s'", product)
-
-  # Add BASE_MOSAIC if shoreline masking is enabled
-  if (shoreline_masking) {
-    cql_filter <- paste0(cql_filter, " OR productName='BASE_MOSAIC'")
+  # Format bbox parameter according to WMS 1.3.0 axis ordering rules
+  if (identical(crs, "EPSG:4326")) {
+    bbox_4326 <- as.numeric(vantor_as_bbox(bbox, target_crs = 4326))
+    # WMS 1.3.0 EPSG:4326 requires [ymin, xmin, ymax, xmax] (lat, lon)
+    wms_bbox_str <- paste(bbox_4326[c(2, 1, 4, 3)], collapse = ",")
+  } else {
+    wms_bbox_str <- paste(bbox_3857, collapse = ",")
   }
 
-  # Create the request
-  request <- httr2::request(wms_url) |>
-    httr2::req_headers(
-      Authorization = paste("Bearer", token)
-    ) |>
+  wms_url <- "https://api.maxar.com/basemaps/v1/ogc/wms"
+
+  if (is.null(cql_filter)) {
+    cql_filter <- sprintf("productName='%s'", product)
+    if (isTRUE(shoreline_masking)) {
+      cql_filter <- paste0(cql_filter, " OR productName='BASE_MOSAIC'")
+    }
+  }
+
+  request <- create_maxar_request(
+    url = wms_url,
+    token = if (identical(auth$type, "bearer")) auth$value else NULL,
+    api_key = if (identical(auth$type, "api_key")) auth$value else NULL
+  ) |>
     httr2::req_url_query(
       service = "WMS",
       request = "GetMap",
       version = "1.3.0",
-      bbox = paste(bbox, collapse = ","),
-      crs = "EPSG:3857",
+      bbox = wms_bbox_str,
+      crs = crs,
       layers = "Maxar:Imagery",
       width = width,
       height = height,
@@ -120,234 +151,232 @@ get_maxar_wms_basemap <- function(bbox,
       cql_filter = cql_filter,
       shoreline_masking = tolower(as.character(shoreline_masking))
     ) |>
-    httr2::req_error(is_error = function(resp) FALSE)  # Handle errors manually
+    httr2::req_error(is_error = function(resp) FALSE)
 
   if (verbose) {
-    cli::cli_alert_info("Requesting WMS basemap from Maxar...\n")
-    cli::cli_alert_info(sprintf("Product: %s\n", product))
-    cli::cli_alert_info(sprintf("Bounding box (EPSG:3857): %.2f, %.2f, %.2f, %.2f\n",
-                                bbox[1], bbox[2], bbox[3], bbox[4]))
+    cli::cli_alert_info("Requesting WMS basemap ({product}, {crs})...")
   }
 
-  # Perform the request
-  tryCatch({
-    response <- httr2::req_perform(request)
-
-    # Check status
-    if (httr2::resp_status(response) != 200) {
-      # Try to get error message from response
-      error_msg <- tryCatch(
-        httr2::resp_body_string(response),
-        error = function(e) httr2::resp_status_desc(response)
-      )
-      cli::cli_abort(paste("WMS request failed with status:",
-                           httr2::resp_status(response),
-                           "\nError:", error_msg))
+  response <- tryCatch(
+    httr2::req_perform(request),
+    error = function(e) {
+      cli::cli_alert_danger("Error connecting to Vantor WMS endpoint: {conditionMessage(e)}")
+      NULL
     }
+  )
 
-    # Check if response is actually a GeoTIFF
-    content_type <- httr2::resp_header(response, "Content-Type")
-    if (!grepl("image/(geo)?tiff", content_type, ignore.case = TRUE)) {
-      # Might be an error message in XML or text
-      error_body <- httr2::resp_body_string(response)
-      cli::cli_abort(paste("Unexpected content type:", content_type,
-                           "\nResponse:", substr(error_body, 1, 500)))
-    }
+  if (is.null(response)) {
+    return(invisible(NULL))
+  }
 
-    # Save the GeoTIFF
-    httr2::resp_body_raw(response) |>
-      writeBin(output_file)
+  if (httr2::resp_status(response) != 200L) {
+    error_msg <- tryCatch(
+      httr2::resp_body_string(response),
+      error = function(e) httr2::resp_status_desc(response)
+    )
+    cli::cli_alert_danger(
+      "WMS request failed with status {httr2::resp_status(response)}: {substr(error_msg, 1, 300)}"
+    )
+    return(invisible(NULL))
+  }
 
-    if (verbose) {
-      file_size <- file.size(output_file) / 1024 / 1024  # Convert to MB
-      cli::cli_alert_info(sprintf("GeoTIFF saved successfully: %s (%.2f MB)",
-                                  output_file, file_size))
-    }
+  content_type <- httr2::resp_header(response, "Content-Type")
+  if (is.null(content_type) || !grepl("image/(geo)?tiff", content_type, ignore.case = TRUE)) {
+    error_body <- tryCatch(httr2::resp_body_string(response), error = function(e) "")
+    cli::cli_alert_danger(
+      "Unexpected WMS response Content-Type ({content_type}): {substr(error_body, 1, 300)}"
+    )
+    return(invisible(NULL))
+  }
 
-    return(invisible(output_file))
+  out_dir <- dirname(output_file)
+  if (!dir.exists(out_dir)) {
+    dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  }
 
-  }, error = function(e) {
-    cli::cli_abort(paste("Error retrieving WMS basemap:", e$message))
-  })
+  writeBin(httr2::resp_body_raw(response), output_file)
+
+  if (verbose) {
+    file_size <- file.size(output_file) / 1024 / 1024
+    cli::cli_alert_success("GeoTIFF saved: {.file {output_file}} ({round(file_size, 2)} MB)")
+  }
+
+  .format_raster_return(output_file, return_type = return_type, invisible_file = TRUE)
 }
 
 
 #' Convert Lat/Lon Bounding Box to Web Mercator
 #'
-#' Helper function to convert a bounding box from EPSG:4326 (lat/lon) to EPSG:3857 (Web Mercator)
+#' Helper function to convert a bounding box or spatial object from `EPSG:4326`
+#' (lat/lon) to `EPSG:3857` (Web Mercator).
 #'
-#' @param bbox_4326 Numeric vector of length 4 with bounding box in EPSG:4326
-#'                  Format: c(lon_min, lat_min, lon_max, lat_max)
+#' @param bbox_4326 Numeric vector of length 4 (`c(lon_min, lat_min, lon_max, lat_max)`)
+#'   or any spatial object supported by [vantor_as_bbox()].
 #'
-#' @return Numeric vector of length 4 with bounding box in EPSG:3857
-#'         Format: c(x_min, y_min, x_max, y_max)
+#' @return Numeric vector of length 4 with bounding box coordinates in `EPSG:3857`:
+#'   `c(x_min, y_min, x_max, y_max)`.
 #'
 #' @examples
-#' \dontrun{
 #' # Denver area in lat/lon
 #' bbox_latlon <- c(-105.01, 39.72, -104.96, 39.75)
-#'
-#' # Convert to Web Mercator
 #' bbox_mercator <- convert_bbox_to_3857(bbox_latlon)
-#' }
 #'
 #' @export
 convert_bbox_to_3857 <- function(bbox_4326) {
-  if (length(bbox_4326) != 4) {
-    stop("bbox_4326 must be a vector of length 4: c(lon_min, lat_min, lon_max, lat_max)")
+  if (is.numeric(bbox_4326)) {
+    if (length(bbox_4326) != 4L) {
+      cli::cli_abort("{.arg bbox_4326} must be a vector of length 4: {.code c(lon_min, lat_min, lon_max, lat_max)}.")
+    }
+    bb <- vantor_as_bbox(bbox_4326, target_crs = 3857, source_crs = 4326)
+  } else {
+    bb <- vantor_as_bbox(bbox_4326, target_crs = 3857)
   }
-
-  # Create sf bbox object
-  bbox_sf <- sf::st_bbox(c(xmin = bbox_4326[1],
-                       ymin = bbox_4326[2],
-                       xmax = bbox_4326[3],
-                       ymax = bbox_4326[4]),
-                     crs = sf::st_crs(4326))
-
-  # Convert to polygon then transform to EPSG:3857
-  bbox_poly <- sf::st_as_sfc(bbox_sf)
-  bbox_3857 <- sf::st_transform(bbox_poly, 3857)
-  bbox_3857 <- sf::st_bbox(bbox_3857)
-
-  return(as.numeric(bbox_3857))
+  as.numeric(bb)
 }
 
 
-#' #' Get Multiple Tiles for Large Areas
-#' #'
-#' #' Retrieves multiple tiles for large areas and optionally merges them into a single GeoTIFF
-#' #'
-#' #' @param bbox Numeric vector of length 4 with bounding box in EPSG:3857
-#' #' @param token Character string. Bearer token
-#' #' @param tile_size Numeric. Size of each tile in meters. Default is 5000 (5km)
-#' #' @param output_dir Character string. Directory for tile outputs. Default is "tiles"
-#' #' @param merge_tiles Logical. Merge tiles into single GeoTIFF. Default is TRUE
-#' #' @param final_output Character string. Name for merged output. Default is "merged_basemap.tif"
-#' #' @param ... Additional arguments passed to get_maxar_wms_basemap()
-#' #'
-#' #' @return Path to the merged GeoTIFF (if merge_tiles=TRUE) or vector of tile paths
-#' #'
-#' #' @export
-#' get_maxar_wms_tiles <- function(bbox,
-#'                                 token,
-#'                                 tile_size = 5000,
-#'                                 output_dir = "tiles",
-#'                                 merge_tiles = TRUE,
-#'                                 final_output = "merged_basemap.tif",
-#'                                 ...) {
+#' Get Multiple WMS Basemap Tiles for Large Areas
 #'
-#'   # Create output directory
-#'   dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+#' Splits a large area of interest into a regular grid of tiles, downloads each
+#' tile via [get_maxar_wms_basemap()], and optionally merges them into a single
+#' GeoTIFF, `terra::SpatRaster`, or `stars` object.
 #'
-#'   # Calculate tile grid
-#'   x_range <- seq(bbox[1], bbox[3], by = tile_size)
-#'   y_range <- seq(bbox[2], bbox[4], by = tile_size)
+#' @param bbox A spatial object (`sf`, `sfc`, `bbox`, `SpatRaster`, `SpatVector`,
+#'   `SpatExtent`, `stars`, `stars_proxy`) or a numeric vector of length 4.
+#' @param token Character string. Optional OAuth2 bearer token.
+#' @param api_key Character string. Optional Maxar/Vantor API key.
+#' @param tile_size Numeric. Size of each tile side in meters. Default is `2500` (2.5 km).
+#' @param output_dir Character string. Directory for individual tile files.
+#'   Defaults to a new directory inside [tempdir()] in compliance with CRAN policy.
+#' @param merge_tiles Logical. Merge downloaded tiles into a single mosaic.
+#'   Default is `TRUE` (requires the `terra` package).
+#' @param final_output Character string. File path for the merged GeoTIFF.
+#'   Defaults to `tempfile(pattern = "vantor_merged_", fileext = ".tif")`.
+#' @param return_type Character string. One of `"file"`, `"SpatRaster"`,
+#'   `"stars"`, or `"stars_proxy"`.
+#' @param verbose Logical. Print progress messages. Default is
+#'   `getOption("vantorr.verbose", TRUE)`.
+#' @param ... Additional arguments passed to [get_maxar_wms_basemap()].
 #'
-#'   if (tail(x_range, 1) < bbox[3]) x_range <- c(x_range, bbox[3])
-#'   if (tail(y_range, 1) < bbox[4]) y_range <- c(y_range, bbox[4])
+#' @return If `merge_tiles = TRUE`, returns the merged output formatted according
+#'   to `return_type`. If `merge_tiles = FALSE`, returns a character vector of
+#'   downloaded tile file paths.
 #'
-#'   # Generate tiles
-#'   tiles <- expand.grid(x = x_range[-length(x_range)],
-#'                        y = y_range[-length(y_range)])
-#'
-#'   cat(sprintf("Downloading %d tiles...\n", nrow(tiles)))
-#'
-#'   tile_files <- character(nrow(tiles))
-#'
-#'   # Download each tile
-#'   for (i in 1:nrow(tiles)) {
-#'     tile_bbox <- c(
-#'       tiles$x[i],
-#'       tiles$y[i],
-#'       min(tiles$x[i] + tile_size, bbox[3]),
-#'       min(tiles$y[i] + tile_size, bbox[4])
-#'     )
-#'
-#'     tile_file <- file.path(output_dir, sprintf("tile_%03d.tif", i))
-#'
-#'     cat(sprintf("Downloading tile %d/%d...\n", i, nrow(tiles)))
-#'
-#'     get_maxar_wms_basemap(
-#'       bbox = tile_bbox,
-#'       token = token,
-#'       output_file = tile_file,
-#'       verbose = FALSE,
-#'       ...
-#'     )
-#'
-#'     tile_files[i] <- tile_file
-#'   }
-#'
-#'   # Merge tiles if requested
-#'   if (merge_tiles && length(tile_files) > 1) {
-#'     cat("Merging tiles...\n")
-#'
-#'     # Load all tiles
-#'     rasters <- lapply(tile_files, terra::rast)
-#'
-#'     # Merge
-#'     if (length(rasters) > 1) {
-#'       merged <- do.call(terra::merge, rasters)
-#'     } else {
-#'       merged <- rasters[[1]]
-#'     }
-#'
-#'     # Save merged raster
-#'     terra::writeRaster(merged, final_output, overwrite = TRUE)
-#'
-#'     cat(sprintf("Merged GeoTIFF saved: %s\n", final_output))
-#'
-#'     # Optionally clean up tiles
-#'     # unlink(tile_files)
-#'
-#'     return(invisible(final_output))
-#'   } else {
-#'     return(invisible(tile_files))
-#'   }
+#' @examples
+#' \donttest{
+#' if (vantor_has_auth()) {
+#'   large_aoi <- sf::st_bbox(
+#'     c(xmin = -105.02, ymin = 39.72, xmax = -104.98, ymax = 39.75),
+#'     crs = sf::st_crs(4326)
+#'   )
+#'   merged_path <- get_maxar_wms_tiles(
+#'     bbox = large_aoi,
+#'     tile_size = 2000,
+#'     resolution = 1.0,
+#'     verbose = FALSE
+#'   )
+#' }
 #' }
 #'
-#'
-#' # Example usage with complete workflow
-#' #' @examples
-#' #' \dontrun{
-#' #' library(httr2)
-#' #' library(sf)
-#' #' library(terra)
-#' #'
-#' #' # Step 1: Authenticate
-#' #' token_response <- get_maxar_token(
-#' #'   username = "your_email@example.com",
-#' #'   password = "your_password"
-#' #' )
-#' #'
-#' #' # Step 2: Define area of interest
-#' #' # Option A: Direct Web Mercator coordinates
-#' #' bbox_3857 <- c(-11700000, 4830000, -11690000, 4840000)
-#' #'
-#' #' # Option B: Convert from lat/lon
-#' #' bbox_latlon <- c(-105.01, 39.72, -104.96, 39.75)  # Denver area
-#' #' bbox_3857 <- convert_bbox_to_3857(bbox_latlon)
-#' #'
-#' #' # Step 3: Download single basemap
-#' #' tif_file <- get_maxar_wms_basemap(
-#' #'   bbox = bbox_3857,
-#' #'   token = token_response$access_token,
-#' #'   output_file = "vivid_30cm_basemap.tif",
-#' #'   resolution = 0.3,  # 30 cm
-#' #'   product = "VIVID_STANDARD_30"
-#' #' )
-#' #'
-#' #' # Step 4: Load and visualize
-#' #' raster <- terra::rast(tif_file)
-#' #' terra::plotRGB(raster, r = 1, g = 2, b = 3, stretch = "lin")
-#' #'
-#' #' # For large areas, use tiled approach
-#' #' large_bbox <- c(-11710000, 4820000, -11680000, 4850000)
-#' #' merged_file <- get_maxar_wms_tiles(
-#' #'   bbox = large_bbox,
-#' #'   token = token_response$access_token,
-#' #'   tile_size = 5000,  # 5km tiles
-#' #'   resolution = 0.3,
-#' #'   merge_tiles = TRUE
-#' #' )
-#' #' }
+#' @export
+get_maxar_wms_tiles <- function(bbox,
+                                token = NULL,
+                                api_key = NULL,
+                                tile_size = 2500,
+                                output_dir = tempfile(pattern = "vantor_tiles_"),
+                                merge_tiles = TRUE,
+                                final_output = tempfile(pattern = "vantor_merged_", fileext = ".tif"),
+                                return_type = c("file", "SpatRaster", "stars", "stars_proxy"),
+                                verbose = getOption("vantorr.verbose", TRUE),
+                                ...) {
+
+  return_type <- match.arg(return_type)
+  bbox_3857 <- as.numeric(vantor_as_bbox(bbox, target_crs = 3857))
+
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+  }
+
+  x_range <- seq(bbox_3857[1], bbox_3857[3], by = tile_size)
+  y_range <- seq(bbox_3857[2], bbox_3857[4], by = tile_size)
+
+  if ( utils::tail(x_range, 1) < bbox_3857[3] ) x_range <- c(x_range, bbox_3857[3])
+  if ( utils::tail(y_range, 1) < bbox_3857[4] ) y_range <- c(y_range, bbox_3857[4])
+
+  tiles <- expand.grid(
+    x_idx = seq_len(length(x_range) - 1L),
+    y_idx = seq_len(length(y_range) - 1L)
+  )
+
+  n_tiles <- nrow(tiles)
+  if (verbose) {
+    cli::cli_alert_info("Downloading {n_tiles} tile{?s} to {.file {output_dir}}...")
+  }
+
+  tile_files <- character(n_tiles)
+
+  for (i in seq_len(n_tiles)) {
+    xi <- tiles$x_idx[i]
+    yi <- tiles$y_idx[i]
+    tile_bbox <- sf::st_bbox(
+      c(xmin = x_range[xi], ymin = y_range[yi],
+        xmax = x_range[xi + 1L], ymax = y_range[yi + 1L]),
+      crs = sf::st_crs(3857)
+    )
+
+    tile_file <- file.path(output_dir, sprintf("tile_%03d.tif", i))
+
+    if (verbose) {
+      cli::cli_alert_info("Downloading tile {i}/{n_tiles}...")
+    }
+
+    res_file <- get_maxar_wms_basemap(
+      bbox = tile_bbox,
+      token = token,
+      api_key = api_key,
+      output_file = tile_file,
+      return_type = "file",
+      verbose = FALSE,
+      ...
+    )
+
+    if (is.null(res_file)) {
+      cli::cli_alert_danger("Tile {i}/{n_tiles} failed to download; aborting tile merge.")
+      return(invisible(NULL))
+    }
+
+    tile_files[i] <- tile_file
+  }
+
+  if (isTRUE(merge_tiles) && length(tile_files) > 1L) {
+    if (!requireNamespace("terra", quietly = TRUE)) {
+      cli::cli_abort("Package {.pkg terra} is required when {.code merge_tiles = TRUE}.")
+    }
+
+    if (verbose) {
+      cli::cli_alert_info("Merging {length(tile_files)} tiles...")
+    }
+
+    r_coll <- terra::sprc(lapply(tile_files, terra::rast))
+    merged <- terra::merge(r_coll)
+    terra::writeRaster(merged, final_output, overwrite = TRUE)
+
+    if (verbose) {
+      cli::cli_alert_success("Merged GeoTIFF saved: {.file {final_output}}")
+    }
+
+    return(.format_raster_return(final_output, return_type = return_type, invisible_file = TRUE))
+  } else if (isTRUE(merge_tiles) && length(tile_files) == 1L) {
+    file.copy(tile_files[1], final_output, overwrite = TRUE)
+    if (verbose) {
+      cli::cli_alert_success("Single tile GeoTIFF saved: {.file {final_output}}")
+    }
+    return(.format_raster_return(final_output, return_type = return_type, invisible_file = TRUE))
+  }
+
+  if (verbose) {
+    cli::cli_alert_success("Downloaded {length(tile_files)} tile{?s} to {.file {output_dir}}.")
+  }
+
+  invisible(tile_files)
+}

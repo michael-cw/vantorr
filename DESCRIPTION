@@ -1,20 +1,31 @@
 Package: vantorr
-Title: Different functions to access Maxar/Vantor satellite imagery
+Title: Access 'Maxar' and 'Vantor' Satellite Imagery APIs
 Version: 0.1.0
 Authors@R: 
     person("Michael", "Wild", , "mWild@worldbank.org", role = c("aut", "cre"))
-Description: The vantorr package is a client for the Maxar/Vantor Hub
-    APIs, enabling programmatic access to high-resolution satellite
-    imagery (e.g., WorldView, Vivid Basemaps, ARD). It provides functions
-    for discovery, search (including STAC metadata),OAuth2 authentication,
-    OGC service (WMS/WMTS) consumption, and data retrieval for remote
-    sensing and GIS applications.
+Description: Provides a client for the 'Maxar' and 'Vantor' Hub APIs
+    (<https://developers.maxar.com/docs/>), enabling programmatic access to
+    high-resolution satellite imagery (such as 'WorldView', 'Vivid' basemaps,
+    and analysis-ready data). Includes functions for 'OAuth2' and API key
+    authentication, discovery and 'STAC' catalog search, 'OGC' web services
+    ('WMS', 'WMTS', 'WFS'), and spatial data retrieval integrated with 'sf',
+    'terra', and 'stars'.
 License: MIT + file LICENSE
+URL: https://github.com/michael-cw/vantorr, https://developers.maxar.com/docs/
+BugReports: https://github.com/michael-cw/vantorr/issues
 Encoding: UTF-8
 Language: en
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+Depends:
+    R (>= 4.1.0)
 Imports: 
     cli,
     httr2,
     sf
+Suggests:
+    stars,
+    terra,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+

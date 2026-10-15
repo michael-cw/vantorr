@@ -2,41 +2,40 @@
 % Please edit documentation in R/vantor_api_gettoken.R
 \name{get_maxar_token}
 \alias{get_maxar_token}
-\title{Get Maxar API Bearer Token}
+\title{Get Maxar / Vantor API Bearer Token}
 \usage{
-get_maxar_token(username, password, verbose = FALSE)
+get_maxar_token(
+  username = Sys.getenv("VANTOR_USERNAME", unset = Sys.getenv("MAXAR_USERNAME", unset =
+    "")),
+  password = Sys.getenv("VANTOR_PASSWORD", unset = Sys.getenv("MAXAR_PASSWORD", unset =
+    "")),
+  verbose = getOption("vantorr.verbose", TRUE)
+)
 }
 \arguments{
-\item{username}{Character string. The email address associated with your Maxar account}
+\item{username}{Character string. The email address associated with your Maxar/Vantor account.
+Defaults to \code{Sys.getenv("VANTOR_USERNAME", Sys.getenv("MAXAR_USERNAME"))}.}
 
-\item{password}{Character string. The password for your Maxar account}
+\item{password}{Character string. The password for your Maxar/Vantor account.
+Defaults to \code{Sys.getenv("VANTOR_PASSWORD", Sys.getenv("MAXAR_PASSWORD"))}.}
 
-\item{verbose}{Logical. If TRUE, prints the full response. Default is FALSE}
+\item{verbose}{Logical. If \code{TRUE}, prints token status details. Defaults to
+\code{getOption("vantorr.verbose", TRUE)}.}
 }
 \value{
-A list containing the token response, including:
-\itemize{
-\item access_token: The bearer token for API access
-\item expires_in: Token validity duration in seconds
-\item refresh_token: Token for refreshing access without re-authentication
-\item token_type: Type of token (Bearer)
-\item Additional response fields
-}
+A list containing the token response (\code{access_token}, \code{expires_in},
+\code{refresh_token}, \code{token_type}), or \code{NULL} (with an alert) if the API cannot be reached.
 }
 \description{
-This function retrieves a bearer token from the Maxar Authentication API
-using the OAuth2 Password Flow.
+Retrieves a bearer token from the Maxar/Vantor Authentication API
+using the OAuth2 Password Flow and caches it in the current session for
+automatic refresh.
 }
 \examples{
-\dontrun{
-# Get a token
-token_response <- get_maxar_token("your_email@example.com", "your_password")
-
-# Extract the bearer token
-bearer_token <- token_response$access_token
-
-# Use the token in subsequent API calls
-# Authorization: Bearer <token>
+\donttest{
+if (vantor_has_auth() && nzchar(Sys.getenv("VANTOR_USERNAME"))) {
+  token_response <- get_maxar_token(verbose = FALSE)
+}
 }
 
 }

@@ -2,29 +2,32 @@
 % Please edit documentation in R/vantor_api_gettoken.R
 \name{refresh_maxar_token}
 \alias{refresh_maxar_token}
-\title{Refresh Maxar API Bearer Token}
+\title{Refresh Maxar / Vantor API Bearer Token}
 \usage{
-refresh_maxar_token(refresh_token, verbose = FALSE)
+refresh_maxar_token(
+  refresh_token = .vantorr_env$refresh_token,
+  verbose = getOption("vantorr.verbose", TRUE)
+)
 }
 \arguments{
-\item{refresh_token}{Character string. The refresh token from a previous token response}
+\item{refresh_token}{Character string. The refresh token from a previous token response.
+Defaults to the cached session refresh token if available.}
 
-\item{verbose}{Logical. If TRUE, prints the full response. Default is FALSE}
+\item{verbose}{Logical. If \code{TRUE}, prints token refresh details. Defaults to
+\code{getOption("vantorr.verbose", TRUE)}.}
 }
 \value{
-A list containing the new token response
+A list containing the new token response, or \code{NULL} if refresh fails.
 }
 \description{
-This function refreshes a bearer token using a refresh token,
-avoiding the need to resend username and password.
+Refreshes a bearer token using a refresh token, avoiding the need to resend
+username and password, and updates the session token cache.
 }
 \examples{
-\dontrun{
-# First get an initial token
-token_response <- get_maxar_token("your_email@example.com", "your_password")
-
-# Later, refresh the token
-new_token_response <- refresh_maxar_token(token_response$refresh_token)
+\donttest{
+if (!is.null(vantorr:::.vantorr_env$refresh_token)) {
+  new_token <- refresh_maxar_token(verbose = FALSE)
+}
 }
 
 }

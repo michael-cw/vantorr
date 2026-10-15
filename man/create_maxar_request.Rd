@@ -2,34 +2,31 @@
 % Please edit documentation in R/vantor_api_gettoken.R
 \name{create_maxar_request}
 \alias{create_maxar_request}
-\title{Create Maxar API Request with Bearer Token}
+\title{Create Maxar / Vantor API Request with Authentication}
 \usage{
-create_maxar_request(url, token)
+create_maxar_request(url, token = NULL, api_key = NULL, verbose = FALSE)
 }
 \arguments{
-\item{url}{Character string. The API endpoint URL}
+\item{url}{Character string. The API endpoint URL.}
 
-\item{token}{Character string. The bearer token (access_token from get_maxar_token)}
+\item{token}{Character string. Optional bearer token (\code{access_token} from \code{get_maxar_token()}).}
+
+\item{api_key}{Character string. Optional Maxar/Vantor API key.}
+
+\item{verbose}{Logical. If \code{TRUE}, prints confirmation of the configured request.
+Defaults to \code{FALSE}.}
 }
 \value{
-An httr2 request object with authentication header set
+An \code{httr2_request} object with authentication headers and retry policies set.
 }
 \description{
-Helper function to create an httr2 request with Maxar bearer token authentication
+Helper function to create an \code{httr2} request with Vantor/Maxar bearer token
+or API key authentication and built-in retry logic for transient HTTP errors.
 }
 \examples{
-\dontrun{
-# Get token
-token_response <- get_maxar_token("your_email@example.com", "your_password")
-
-# Create authenticated request for another API endpoint
 req <- create_maxar_request(
-  "https://api.maxar.com/some-endpoint",
-  token_response$access_token
+  "https://api.maxar.com/discovery/v1",
+  api_key = "example_key"
 )
-
-# Perform the request
-response <- req_perform(req)
-}
 
 }

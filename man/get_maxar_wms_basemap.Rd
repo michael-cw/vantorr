@@ -2,70 +2,93 @@
 % Please edit documentation in R/vantor_api_getmap.R
 \name{get_maxar_wms_basemap}
 \alias{get_maxar_wms_basemap}
-\title{Get Maxar WMS Basemap as GeoTIFF}
+\title{Get Maxar / Vantor WMS Basemap as GeoTIFF or Spatial Raster Object}
 \usage{
 get_maxar_wms_basemap(
   bbox,
-  token,
-  output_file = "maxar_basemap.tif",
+  token = NULL,
+  output_file = tempfile(pattern = "vantor_basemap_", fileext = ".tif"),
   width = NULL,
   height = NULL,
   resolution = 0.3,
   product = "VIVID_STANDARD_30",
+  crs = c("EPSG:3857", "EPSG:4326"),
+  cql_filter = NULL,
   shoreline_masking = FALSE,
-  verbose = TRUE
+  api_key = NULL,
+  return_type = c("file", "SpatRaster", "stars", "stars_proxy"),
+  verbose = getOption("vantorr.verbose", TRUE)
 )
 }
 \arguments{
-\item{bbox}{Numeric vector of length 4 with bounding box coordinates in EPSG:3857
-Format: c(xmin, ymin, xmax, ymax)}
+\item{bbox}{A spatial object (\code{sf}, \code{sfc}, \code{bbox}, \code{SpatRaster}, \code{SpatVector},
+\code{SpatExtent}, \code{stars}, \code{stars_proxy}) or a numeric vector of length 4:
+\code{c(xmin, ymin, xmax, ymax)}. Automatically transformed to the target \code{crs}.}
 
-\item{token}{Character string. Bearer token from get_maxar_token() function}
+\item{token}{Character string. Optional OAuth2 bearer token from \code{get_maxar_token()}.
+If \code{NULL}, resolved via \code{api_key}, session cache (\code{vantor_auth()}), or
+environment variables.}
 
 \item{output_file}{Character string. Path where the GeoTIFF file will be saved.
-Default is "maxar_basemap.tif"}
+Defaults to \code{tempfile(pattern = "vantor_basemap_", fileext = ".tif")} in
+compliance with CRAN policies.}
 
-\item{width}{Integer. Width of the output image in pixels. If NULL, calculated from resolution.}
+\item{width}{Integer. Width of the output image in pixels. If \code{NULL}, calculated
+from \code{resolution}.}
 
-\item{height}{Integer. Height of the output image in pixels. If NULL, calculated from resolution.}
+\item{height}{Integer. Height of the output image in pixels. If \code{NULL}, calculated
+from \code{resolution}.}
 
-\item{resolution}{Numeric. Target resolution in meters. Default is 0.3 (30 cm).
-Used to calculate width/height if not provided.}
+\item{resolution}{Numeric. Target ground resolution in meters. Default is \code{0.3} (30 cm).
+Used to calculate \code{width} and \code{height} if not explicitly provided.}
 
-\item{product}{Character string. Vivid product name. Default is "VIVID_STANDARD_30".
-Options: "VIVID_STANDARD_30", "VIVID_ADVANCED_15"}
+\item{product}{Character string. Vivid product name. Default is \code{"VIVID_STANDARD_30"}.
+Options include \code{"VIVID_STANDARD_30"} and \code{"VIVID_ADVANCED_15"}.}
 
-\item{shoreline_masking}{Logical. Apply shoreline masking. Default is FALSE.}
+\item{crs}{Character string. Output CRS requested from WMS (\code{"EPSG:3857"} or
+\code{"EPSG:4326"}). Default is \code{"EPSG:3857"}.}
 
-\item{verbose}{Logical. Print progress messages. Default is TRUE.}
+\item{cql_filter}{Character string. Optional custom CQL filter. If \code{NULL},
+constructed automatically from \code{product} and \code{shoreline_masking}.}
+
+\item{shoreline_masking}{Logical. Apply shoreline masking. Default is \code{FALSE}.}
+
+\item{api_key}{Character string. Optional Maxar/Vantor API key (\code{maxar-api-key}).}
+
+\item{return_type}{Character string. Return format: \code{"file"} (default, returns
+the file path invisibly), \code{"SpatRaster"} (returns a \code{terra::SpatRaster}),
+\code{"stars"} (returns an in-memory \code{stars} object), or \code{"stars_proxy"}.}
+
+\item{verbose}{Logical. Print progress messages. Default is
+\code{getOption("vantorr.verbose", TRUE)}.}
 }
 \value{
-The path to the saved GeoTIFF file (invisibly)
+Depending on \code{return_type}, the path to the saved GeoTIFF file
+(invisibly when \code{return_type = "file"}), a \code{SpatRaster}, or a \code{stars} object.
+Returns \code{NULL} invisibly (with an informative message) if the API request fails.
 }
 \description{
-This function retrieves a Maxar Vivid Mosaic 30 cm basemap as a GeoTIFF file
-for a specified bounding box in EPSG:3857 (Web Mercator) projection.
+Retrieves a Maxar/Vantor Vivid Mosaic basemap (30 cm or 15 cm) via OGC WMS
+for a specified area of interest. Supports spatial inputs from \code{sf}, \code{terra},
+and \code{stars}, as well as numeric bounding boxes, and can return a file path,
+\code{terra::SpatRaster}, or \code{stars} object.
 }
 \examples{
-\dontrun{
-# Get authentication token first
-token_response <- get_maxar_token("your_email@example.com", "your_password")
+\donttest{
+if (vantor_has_auth()) {
+  # Define area of interest using an sf bounding box (WGS84)
+  aoi <- sf::st_bbox(
+    c(xmin = -105.005, ymin = 39.735, xmax = -105.000, ymax = 39.740),
+    crs = sf::st_crs(4326)
+  )
 
-# Define bounding box in EPSG:3857 (Web Mercator)
-# Example: Area around Denver, Colorado
-bbox_3857 <- c(-11699050, 4837950, -11698050, 4838950)  # 1000m x 1000m
-
-# Retrieve basemap as GeoTIFF
-tif_file <- get_maxar_wms_basemap(
-  bbox = bbox_3857,
-  token = token_response$access_token,
-  output_file = "denver_basemap.tif"
-)
-
-# Load the resulting GeoTIFF
-raster <- terra::rast(tif_file)
-terra::plotRGB(raster, r = 1, g = 2, b = 3, stretch = "lin",
-main = "Denver, Colorado - 1000m × 1000m (30cm resolution)")
+  # Retrieve basemap to a temporary GeoTIFF file
+  tif_file <- get_maxar_wms_basemap(
+    bbox = aoi,
+    resolution = 0.5,
+    verbose = FALSE
+  )
+}
 }
 
 }
