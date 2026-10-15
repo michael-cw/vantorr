@@ -1,0 +1,9 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  shiny-leaflet-integration: shiny-leaflet-integration.html
+last_built: 2026-10-15T13:19Z
+urls:
+  reference: https://michael-cw.github.io/vantorr/reference
+  article: https://michael-cw.github.io/vantorr/articles
