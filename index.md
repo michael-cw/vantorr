@@ -47,14 +47,30 @@ You can install the development version of `vantorr` from
 ``` r
 
 # install.packages("devtools")
-devtools::install_github("michael-cw/vantorr, build_vignettes = TRUE")
+devtools::install_github("michael-cw/vantorr", build_vignettes = TRUE)
 ```
 
 ## Authentication
 
-The Vantor API supports both **API Keys** (long-lived, up to 180 days;
-required for browser-based `leaflet` tile streaming) and **OAuth 2.0
-Bearer Tokens** (session-based, with automatic refresh).
+The Vantor API supports both **API Keys** (long-lived, up to 180 days)
+and **OAuth 2.0 Bearer Tokens** (session-based, with automatic refresh).
+Note that different Vantor API services accept different credential
+types:
+
+- **OGC & Non-Administrative APIs**
+  ([`get_maxar_wms_basemap()`](https://michael-cw.github.io/vantorr/reference/get_maxar_wms_basemap.md),
+  [`get_maxar_wms_tiles()`](https://michael-cw.github.io/vantorr/reference/get_maxar_wms_tiles.md),
+  [`vantor_get_seamlines()`](https://michael-cw.github.io/vantorr/reference/vantor_get_seamlines.md)):
+  Accept **either** an API Key or an OAuth2 Bearer Token.
+- **Browser-Based `leaflet` Tile Layers**
+  ([`add_vantor_basemap()`](https://michael-cw.github.io/vantorr/reference/add_vantor_basemap.md),
+  [`add_vantor_seamlines()`](https://michael-cw.github.io/vantorr/reference/add_vantor_seamlines.md),
+  [`add_vantor_imagery()`](https://michael-cw.github.io/vantorr/reference/add_vantor_imagery.md)):
+  Require an **API Key** (`maxar_api_key`).
+- **Account Services / Admin APIs**
+  ([`vantor_get_usage()`](https://michael-cw.github.io/vantorr/reference/vantor_get_usage.md)):
+  Require an **OAuth2 Bearer Token** (`username` and `password`), as
+  Vantor’s Admin APIs do not accept API keys.
 
 You can configure credentials in your `.Renviron` file
 (`VANTOR_API_KEY`, or `VANTOR_USERNAME` and `VANTOR_PASSWORD`) or set
@@ -65,13 +81,14 @@ them interactively for your R session with
 
 library(vantorr)
 
-# Option 1: Set an API Key for the session
+# Option 1: Set an API Key for the session (for OGC & Leaflet functions)
 vantor_auth(api_key = "your_api_key")
 
-# Option 2: Authenticate via OAuth2 (automatically caches and refreshes tokens)
+# Option 2: Authenticate via OAuth2 (automatically caches and refreshes tokens;
+# required for Admin endpoints such as vantor_get_usage())
 vantor_auth(username = "your_email@example.com", password = "your_password")
 
-# Check account credit usage and quota
+# Check account credit usage and quota (requires OAuth2 Bearer token & Admin permissions)
 usage <- vantor_get_usage(category = "PRODUCT", unit = "CREDIT")
 ```
 

@@ -49,7 +49,7 @@
 <li>
 <strong>Seamlines OGC WFS &amp; Usage API v2 (<code>vantor_seamlines_usage.R</code>)</strong>:
 <ul><li>Added <code><a href="../reference/vantor_get_seamlines.html">vantor_get_seamlines()</a></code> to fetch basemap seamline polygons and acquisition metadata (<code>acq_time</code>, <code>gsd</code>, <code>sensor</code>, <code>ona</code>, <code>catid</code>) as an <code>sf</code> object via OGC WFS.</li>
-<li>Added <code><a href="../reference/vantor_get_usage.html">vantor_get_usage()</a></code> to query the Usage API (<code>v2/activation/overview</code>) for account credit limits, remaining quota, and consumption breakdowns.</li>
+<li>Added <code><a href="../reference/vantor_get_usage.html">vantor_get_usage()</a></code> to query the Account Services Usage API (<code>v2/activation/overview</code>, requiring OAuth2 Bearer Token authentication) for account credit limits, remaining quota, and consumption breakdowns.</li>
 </ul></li>
 <li>
 <strong>R Shiny Application Modules (<code>vantor_shiny.R</code>, <code>vantor_api_getmap.R</code>)</strong>:

@@ -27,19 +27,32 @@ This vignette covers:
 
 ## 1. Authentication for Browser Tile Streaming
 
-While server-side R functions such as
-[`get_maxar_wms_basemap()`](https://michael-cw.github.io/vantorr/reference/get_maxar_wms_basemap.md),
-[`vantor_get_seamlines()`](https://michael-cw.github.io/vantorr/reference/vantor_get_seamlines.md),
-and
-[`vantor_get_usage()`](https://michael-cw.github.io/vantorr/reference/vantor_get_usage.md)
-work with either an **API Key** (`maxar-api-key`) or an **OAuth2 Bearer
-Token** (`Authorization: Bearer <token>`), web browsers rendering
-`leaflet` map tiles (`<img>` requests) cannot attach custom HTTP
-`Authorization` headers to standard tile URLs.
+Vantor Hub endpoints support two authentication mechanisms with distinct
+scopes:
 
-Instead, Vantor’s OGC WMTS and WMS endpoints accept an API key directly
-via the `maxar_api_key` URL query parameter. To use `leaflet` tile
-layers seamlessly, configure your API key in `.Renviron`:
+- **OGC & Non-Administrative APIs**
+  ([`get_maxar_wms_basemap()`](https://michael-cw.github.io/vantorr/reference/get_maxar_wms_basemap.md),
+  [`get_maxar_wms_tiles()`](https://michael-cw.github.io/vantorr/reference/get_maxar_wms_tiles.md),
+  [`vantor_get_seamlines()`](https://michael-cw.github.io/vantorr/reference/vantor_get_seamlines.md)):
+  Work with **either** an **API Key** (`maxar-api-key`) or an **OAuth2
+  Bearer Token** (`Authorization: Bearer <token>`).
+- **Account Services / Admin APIs**
+  ([`vantor_get_usage()`](https://michael-cw.github.io/vantorr/reference/vantor_get_usage.md)):
+  Require an **OAuth2 Bearer Token**
+  (`vantor_auth(username = "...", password = "...")`), as Vantor’s Admin
+  APIs do not accept API keys.
+- **Browser-Based `leaflet` Tile Layers**
+  ([`add_vantor_basemap()`](https://michael-cw.github.io/vantorr/reference/add_vantor_basemap.md),
+  `add_vantor_seamlines(mode = "wms")`,
+  [`add_vantor_imagery()`](https://michael-cw.github.io/vantorr/reference/add_vantor_imagery.md)):
+  Require an **API Key** (`maxar_api_key` URL query parameter), because
+  web browsers rendering `<img>` tile requests cannot attach custom HTTP
+  `Authorization: Bearer` headers.
+
+To use `leaflet` tile layers seamlessly, configure your API key in
+`.Renviron` (you can also set `VANTOR_USERNAME` and `VANTOR_PASSWORD`
+alongside it if you use
+[`vantor_get_usage()`](https://michael-cw.github.io/vantorr/reference/vantor_get_usage.md)):
 
 ``` r
 

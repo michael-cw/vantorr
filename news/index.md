@@ -37,8 +37,9 @@
       via OGC WFS.
     - Added
       [`vantor_get_usage()`](https://michael-cw.github.io/vantorr/reference/vantor_get_usage.md)
-      to query the Usage API (`v2/activation/overview`) for account
-      credit limits, remaining quota, and consumption breakdowns.
+      to query the Account Services Usage API (`v2/activation/overview`,
+      requiring OAuth2 Bearer Token authentication) for account credit
+      limits, remaining quota, and consumption breakdowns.
   - **R Shiny Application Modules (`vantor_shiny.R`,
     `vantor_api_getmap.R`)**:
     - Added drop-in Shiny modules

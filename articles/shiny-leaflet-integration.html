@@ -98,19 +98,36 @@ lines of code.</li>
 <div class="section level2">
 <h2 id="authentication-for-browser-tile-streaming">1. Authentication for Browser Tile Streaming<a class="anchor" aria-label="anchor" href="#authentication-for-browser-tile-streaming"></a>
 </h2>
-<p>While server-side R functions such as
-<code><a href="../reference/get_maxar_wms_basemap.html">get_maxar_wms_basemap()</a></code>,
-<code><a href="../reference/vantor_get_seamlines.html">vantor_get_seamlines()</a></code>, and <code><a href="../reference/vantor_get_usage.html">vantor_get_usage()</a></code>
-work with either an <strong>API Key</strong>
-(<code>maxar-api-key</code>) or an <strong>OAuth2 Bearer Token</strong>
-(<code>Authorization: Bearer &lt;token&gt;</code>), web browsers
-rendering <code>leaflet</code> map tiles (<code>&lt;img&gt;</code>
-requests) cannot attach custom HTTP <code>Authorization</code> headers
-to standard tile URLs.</p>
-<p>Instead, Vantor’s OGC WMTS and WMS endpoints accept an API key
-directly via the <code>maxar_api_key</code> URL query parameter. To use
-<code>leaflet</code> tile layers seamlessly, configure your API key in
-<code>.Renviron</code>:</p>
+<p>Vantor Hub endpoints support two authentication mechanisms with
+distinct scopes:</p>
+<ul>
+<li>
+<strong>OGC &amp; Non-Administrative APIs</strong>
+(<code><a href="../reference/get_maxar_wms_basemap.html">get_maxar_wms_basemap()</a></code>,
+<code><a href="../reference/get_maxar_wms_tiles.html">get_maxar_wms_tiles()</a></code>,
+<code><a href="../reference/vantor_get_seamlines.html">vantor_get_seamlines()</a></code>): Work with <strong>either</strong>
+an <strong>API Key</strong> (<code>maxar-api-key</code>) or an
+<strong>OAuth2 Bearer Token</strong>
+(<code>Authorization: Bearer &lt;token&gt;</code>).</li>
+<li>
+<strong>Account Services / Admin APIs</strong>
+(<code><a href="../reference/vantor_get_usage.html">vantor_get_usage()</a></code>): Require an <strong>OAuth2 Bearer
+Token</strong>
+(<code>vantor_auth(username = "...", password = "...")</code>), as
+Vantor’s Admin APIs do not accept API keys.</li>
+<li>
+<strong>Browser-Based <code>leaflet</code> Tile Layers</strong>
+(<code><a href="../reference/add_vantor_basemap.html">add_vantor_basemap()</a></code>,
+<code>add_vantor_seamlines(mode = "wms")</code>,
+<code><a href="../reference/add_vantor_imagery.html">add_vantor_imagery()</a></code>): Require an <strong>API Key</strong>
+(<code>maxar_api_key</code> URL query parameter), because web browsers
+rendering <code>&lt;img&gt;</code> tile requests cannot attach custom
+HTTP <code>Authorization: Bearer</code> headers.</li>
+</ul>
+<p>To use <code>leaflet</code> tile layers seamlessly, configure your
+API key in <code>.Renviron</code> (you can also set
+<code>VANTOR_USERNAME</code> and <code>VANTOR_PASSWORD</code> alongside
+it if you use <code><a href="../reference/vantor_get_usage.html">vantor_get_usage()</a></code>):</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># In your ~/.Renviron file:</span></span>
 <span><span class="va">VANTOR_API_KEY</span><span class="op">=</span><span class="st">"your_vantor_api_key"</span></span></code></pre></div>

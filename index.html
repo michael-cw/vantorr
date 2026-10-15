@@ -82,23 +82,32 @@
 <p>You can install the development version of <code>vantorr</code> from <a href="https://github.com/michael-cw/vantorr" class="external-link">GitHub</a> with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"michael-cw/vantorr, build_vignettes = TRUE"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"michael-cw/vantorr"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="authentication">Authentication<a class="anchor" aria-label="anchor" href="#authentication"></a>
 </h2>
-<p>The Vantor API supports both <strong>API Keys</strong> (long-lived, up to 180 days; required for browser-based <code>leaflet</code> tile streaming) and <strong>OAuth 2.0 Bearer Tokens</strong> (session-based, with automatic refresh).</p>
+<p>The Vantor API supports both <strong>API Keys</strong> (long-lived, up to 180 days) and <strong>OAuth 2.0 Bearer Tokens</strong> (session-based, with automatic refresh). Note that different Vantor API services accept different credential types:</p>
+<ul>
+<li>
+<strong>OGC &amp; Non-Administrative APIs</strong> (<code><a href="reference/get_maxar_wms_basemap.html">get_maxar_wms_basemap()</a></code>, <code><a href="reference/get_maxar_wms_tiles.html">get_maxar_wms_tiles()</a></code>, <code><a href="reference/vantor_get_seamlines.html">vantor_get_seamlines()</a></code>): Accept <strong>either</strong> an API Key or an OAuth2 Bearer Token.</li>
+<li>
+<strong>Browser-Based <code>leaflet</code> Tile Layers</strong> (<code><a href="reference/add_vantor_basemap.html">add_vantor_basemap()</a></code>, <code><a href="reference/add_vantor_seamlines.html">add_vantor_seamlines()</a></code>, <code><a href="reference/add_vantor_imagery.html">add_vantor_imagery()</a></code>): Require an <strong>API Key</strong> (<code>maxar_api_key</code>).</li>
+<li>
+<strong>Account Services / Admin APIs</strong> (<code><a href="reference/vantor_get_usage.html">vantor_get_usage()</a></code>): Require an <strong>OAuth2 Bearer Token</strong> (<code>username</code> and <code>password</code>), as Vantor’s Admin APIs do not accept API keys.</li>
+</ul>
 <p>You can configure credentials in your <code>.Renviron</code> file (<code>VANTOR_API_KEY</code>, or <code>VANTOR_USERNAME</code> and <code>VANTOR_PASSWORD</code>) or set them interactively for your R session with <code><a href="reference/vantor_auth.html">vantor_auth()</a></code>:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/michael-cw/vantorr" class="external-link">vantorr</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Option 1: Set an API Key for the session</span></span>
+<span><span class="co"># Option 1: Set an API Key for the session (for OGC &amp; Leaflet functions)</span></span>
 <span><span class="fu"><a href="reference/vantor_auth.html">vantor_auth</a></span><span class="op">(</span>api_key <span class="op">=</span> <span class="st">"your_api_key"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Option 2: Authenticate via OAuth2 (automatically caches and refreshes tokens)</span></span>
+<span><span class="co"># Option 2: Authenticate via OAuth2 (automatically caches and refreshes tokens;</span></span>
+<span><span class="co"># required for Admin endpoints such as vantor_get_usage())</span></span>
 <span><span class="fu"><a href="reference/vantor_auth.html">vantor_auth</a></span><span class="op">(</span>username <span class="op">=</span> <span class="st">"your_email@example.com"</span>, password <span class="op">=</span> <span class="st">"your_password"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Check account credit usage and quota</span></span>
+<span><span class="co"># Check account credit usage and quota (requires OAuth2 Bearer token &amp; Admin permissions)</span></span>
 <span><span class="va">usage</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/vantor_get_usage.html">vantor_get_usage</a></span><span class="op">(</span>category <span class="op">=</span> <span class="st">"PRODUCT"</span>, unit <span class="op">=</span> <span class="st">"CREDIT"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">

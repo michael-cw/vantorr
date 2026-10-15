@@ -100,6 +100,18 @@ arguments are not explicitly supplied:</p><ul><li><p><code>VANTOR_API_KEY</code>
 <li><p><code>VANTOR_USERNAME</code> or <code>MAXAR_USERNAME</code></p></li>
 <li><p><code>VANTOR_PASSWORD</code> or <code>MAXAR_PASSWORD</code></p></li>
 </ul></div>
+    <div class="section level2">
+    <h2 id="note">Note<a class="anchor" aria-label="anchor" href="#note"></a></h2>
+    <p><strong>Authentication Scope Across Vantor Endpoints:</strong></p><ul><li><p><strong>OGC &amp; Non-Administrative APIs</strong> (<code><a href="get_maxar_wms_basemap.html">get_maxar_wms_basemap()</a></code>,
+<code><a href="get_maxar_wms_tiles.html">get_maxar_wms_tiles()</a></code>, <code><a href="vantor_get_seamlines.html">vantor_get_seamlines()</a></code>): Accept <strong>either</strong> an
+API key (<code>maxar-api-key</code>) or an OAuth2 Bearer token.</p></li>
+<li><p><strong>Browser-Based <code>leaflet</code> Tile Layers</strong> (<code><a href="add_vantor_basemap.html">add_vantor_basemap()</a></code>,
+<code><a href="add_vantor_seamlines.html">add_vantor_seamlines()</a></code>, <code><a href="add_vantor_imagery.html">add_vantor_imagery()</a></code>, <code><a href="vantor_wmts_url.html">vantor_wmts_url()</a></code>):
+Require an <strong>API key</strong> (<code>maxar_api_key</code> URL query parameter).</p></li>
+<li><p><strong>Account Services / Admin APIs</strong> (<code><a href="vantor_get_usage.html">vantor_get_usage()</a></code>): Require an
+<strong>OAuth2 Bearer token</strong> (<code>username</code> and <code>password</code>, or <code>token</code>). Per the
+Vantor API specification, Admin APIs do not accept API keys.</p></li>
+</ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

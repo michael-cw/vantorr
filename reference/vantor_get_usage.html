@@ -56,7 +56,6 @@ dashboards before launching large multi-tile downloads.</p>
 <span>  category <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"PRODUCT"</span>, <span class="st">"DAY"</span>, <span class="st">"WEEK"</span>, <span class="st">"MONTH"</span>, <span class="st">"QUARTER"</span><span class="op">)</span>,</span>
 <span>  unit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CREDIT"</span>, <span class="st">"FEATURE_COUNT"</span>, <span class="st">"REQUEST_COUNT"</span>, <span class="st">"MAP_VIEW"</span>, <span class="st">"GIGABYTE"</span>, <span class="st">"SQ_KM"</span><span class="op">)</span>,</span>
 <span>  token <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  api_key <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"vantorr.verbose"</span>, <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -77,11 +76,9 @@ One of <code>"CREDIT"</code> (default), <code>"FEATURE_COUNT"</code>, <code>"REQ
 
 
 <dt id="arg-token">token<a class="anchor" aria-label="anchor" href="#arg-token"></a></dt>
-<dd><p>Character string. Optional OAuth2 bearer token.</p></dd>
-
-
-<dt id="arg-api-key">api_key<a class="anchor" aria-label="anchor" href="#arg-api-key"></a></dt>
-<dd><p>Character string. Optional Maxar/Vantor API key.</p></dd>
+<dd><p>Character string. Optional OAuth2 bearer token (<code>access_token</code>
+from <code><a href="get_maxar_token.html">get_maxar_token()</a></code>). If <code>NULL</code>, resolved from the active OAuth2
+session cache or <code>VANTOR_USERNAME</code> / <code>VANTOR_PASSWORD</code> environment variables.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -95,11 +92,23 @@ One of <code>"CREDIT"</code> (default), <code>"FEATURE_COUNT"</code>, <code>"REQ
 <code>activations</code>, <code>usageCategories</code>, and a tidy <code>summary_df</code> data frame when
 available), or <code>NULL</code> invisibly if the API request fails.</p>
     </div>
+    <div class="section level2">
+    <h2 id="note">Note<a class="anchor" aria-label="anchor" href="#note"></a></h2>
+    <p><strong>Authentication Requirement (OAuth2 Bearer Token Only):</strong>
+The Usage API (<code>https://api.maxar.com/usage/v2/activation/overview</code>) is part
+of the Vantor <strong>Account Services (Admin API)</strong>
+(<a href="https://developers.maxar.com/docs/admin/guides/usage" class="external-link">https://developers.maxar.com/docs/admin/guides/usage</a>). Per the Vantor API
+specification, <strong>API keys (<code>maxar-api-key</code>) are not accepted by Admin APIs</strong>.
+You must authenticate using an OAuth2 Bearer Token via
+<code>vantor_auth(username = "...", password = "...")</code> (or <code>VANTOR_USERNAME</code> and
+<code>VANTOR_PASSWORD</code> in <code>.Renviron</code>), and your account must have Admin
+permissions to view activation usage.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="vantor_has_auth.html">vantor_has_auth</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nzchar</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"VANTOR_USERNAME"</span><span class="op">)</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nzchar</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"VANTOR_PASSWORD"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="va">usage</span> <span class="op">&lt;-</span> <span class="fu">vantor_get_usage</span><span class="op">(</span>category <span class="op">=</span> <span class="st">"PRODUCT"</span>, unit <span class="op">=</span> <span class="st">"CREDIT"</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>

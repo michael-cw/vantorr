@@ -61,6 +61,30 @@ if arguments are not explicitly supplied:
 
 - `VANTOR_PASSWORD` or `MAXAR_PASSWORD`
 
+## Note
+
+**Authentication Scope Across Vantor Endpoints:**
+
+- **OGC & Non-Administrative APIs**
+  ([`get_maxar_wms_basemap()`](https://michael-cw.github.io/vantorr/reference/get_maxar_wms_basemap.md),
+  [`get_maxar_wms_tiles()`](https://michael-cw.github.io/vantorr/reference/get_maxar_wms_tiles.md),
+  [`vantor_get_seamlines()`](https://michael-cw.github.io/vantorr/reference/vantor_get_seamlines.md)):
+  Accept **either** an API key (`maxar-api-key`) or an OAuth2 Bearer
+  token.
+
+- **Browser-Based `leaflet` Tile Layers**
+  ([`add_vantor_basemap()`](https://michael-cw.github.io/vantorr/reference/add_vantor_basemap.md),
+  [`add_vantor_seamlines()`](https://michael-cw.github.io/vantorr/reference/add_vantor_seamlines.md),
+  [`add_vantor_imagery()`](https://michael-cw.github.io/vantorr/reference/add_vantor_imagery.md),
+  [`vantor_wmts_url()`](https://michael-cw.github.io/vantorr/reference/vantor_wmts_url.md)):
+  Require an **API key** (`maxar_api_key` URL query parameter).
+
+- **Account Services / Admin APIs**
+  ([`vantor_get_usage()`](https://michael-cw.github.io/vantorr/reference/vantor_get_usage.md)):
+  Require an **OAuth2 Bearer token** (`username` and `password`, or
+  `token`). Per the Vantor API specification, Admin APIs do not accept
+  API keys.
+
 ## Examples
 
 ``` r
