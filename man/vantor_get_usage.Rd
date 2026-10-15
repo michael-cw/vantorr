@@ -8,7 +8,6 @@ vantor_get_usage(
   category = c("PRODUCT", "DAY", "WEEK", "MONTH", "QUARTER"),
   unit = c("CREDIT", "FEATURE_COUNT", "REQUEST_COUNT", "MAP_VIEW", "GIGABYTE", "SQ_KM"),
   token = NULL,
-  api_key = NULL,
   verbose = getOption("vantorr.verbose", TRUE)
 )
 }
@@ -20,9 +19,9 @@ One of \code{"PRODUCT"} (default), \code{"DAY"}, \code{"WEEK"}, \code{"MONTH"}, 
 One of \code{"CREDIT"} (default), \code{"FEATURE_COUNT"}, \code{"REQUEST_COUNT"},
 \code{"MAP_VIEW"}, \code{"GIGABYTE"}, or \code{"SQ_KM"}.}
 
-\item{token}{Character string. Optional OAuth2 bearer token.}
-
-\item{api_key}{Character string. Optional Maxar/Vantor API key.}
+\item{token}{Character string. Optional OAuth2 bearer token (\code{access_token}
+from \code{\link[=get_maxar_token]{get_maxar_token()}}). If \code{NULL}, resolved from the active OAuth2
+session cache or \code{VANTOR_USERNAME} / \code{VANTOR_PASSWORD} environment variables.}
 
 \item{verbose}{Logical. Print summary messages. Default is
 \code{getOption("vantorr.verbose", TRUE)}.}
@@ -38,9 +37,20 @@ activation credit limits, total usage, and categorized consumption metrics.
 Useful for monitoring account quota in interactive R sessions or Shiny
 dashboards before launching large multi-tile downloads.
 }
+\note{
+\strong{Authentication Requirement (OAuth2 Bearer Token Only):}
+The Usage API (\verb{https://api.maxar.com/usage/v2/activation/overview}) is part
+of the Vantor \strong{Account Services (Admin API)}
+(\url{https://developers.maxar.com/docs/admin/guides/usage}). Per the Vantor API
+specification, \strong{API keys (\code{maxar-api-key}) are not accepted by Admin APIs}.
+You must authenticate using an OAuth2 Bearer Token via
+\code{vantor_auth(username = "...", password = "...")} (or \code{VANTOR_USERNAME} and
+\code{VANTOR_PASSWORD} in \code{.Renviron}), and your account must have Admin
+permissions to view activation usage.
+}
 \examples{
 \donttest{
-if (vantor_has_auth()) {
+if (nzchar(Sys.getenv("VANTOR_USERNAME")) && nzchar(Sys.getenv("VANTOR_PASSWORD"))) {
   usage <- vantor_get_usage(category = "PRODUCT", unit = "CREDIT", verbose = FALSE)
 }
 }

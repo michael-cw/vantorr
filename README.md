@@ -1,82 +1,67 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+
 
 # vantorr
 
 <!-- badges: start -->
-
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-The `vantorr` package provides an R interface to the [Maxar / Vantor Hub
-APIs](https://developers.maxar.com/docs/), enabling programmatic access
-to high-resolution satellite imagery (such as Vivid Mosaic basemaps,
-WorldView archives, and analysis-ready data). It natively integrates
-with `sf`, `terra`, `stars`, `leaflet`, and `shiny`.
+The `vantorr` package provides an R interface to the [Maxar / Vantor Hub APIs](https://developers.maxar.com/docs/), enabling programmatic access to high-resolution satellite imagery (such as Vivid Mosaic basemaps, WorldView archives, and analysis-ready data). It natively integrates with `sf`, `terra`, `stars`, `leaflet`, and `shiny`.
 
 ## Key Features
 
-- **Flexible Authentication**: Session credential management via API
-  Keys (`maxar-api-key`) or OAuth 2.0 Bearer Tokens (`vantor_auth()`)
-  with automatic token caching and refresh.
-- **Multi-Package Spatial Dispatch**: Pass `sf`, `terra` (`SpatRaster`,
-  `SpatVector`, `SpatExtent`), or `stars` objects to any spatial query
-  via `vantor_as_bbox()`, and receive outputs as GeoTIFF files,
-  `SpatRaster`, or `stars` objects.
-- **Basemaps, Tiling & Seamline Metadata**: Download Vivid 30 cm / 15 cm
-  GeoTIFFs (`get_maxar_wms_basemap()`), automatically tile and mosaic
-  large areas (`get_maxar_wms_tiles()`), and retrieve vector seamline
-  polygons with acquisition dates and sensor metadata via OGC WFS
-  (`vantor_get_seamlines()`).
-- **Account Quota Monitoring**: Query credit limits and consumption
-  breakdowns via the Usage API v2 (`vantor_get_usage()`).
-- **Interactive `leaflet` & `shiny` Integration**: Stream WMTS/WMS
-  basemaps, seamlines, and archive strips in `leaflet`
-  (`add_vantor_basemap()`, `add_vantor_seamlines()`,
-  `add_vantor_imagery()`), or embed drop-in Shiny modules
-  (`vantor_auth_ui()`, `vantor_explorer_ui()`, `run_vantor_demo_app()`).
+- **Flexible Authentication**: Session credential management via API Keys (`maxar-api-key`) or OAuth 2.0 Bearer Tokens (`vantor_auth()`) with automatic token caching and refresh.
+- **Multi-Package Spatial Dispatch**: Pass `sf`, `terra` (`SpatRaster`, `SpatVector`, `SpatExtent`), or `stars` objects to any spatial query via `vantor_as_bbox()`, and receive outputs as GeoTIFF files, `SpatRaster`, or `stars` objects.
+- **Basemaps, Tiling & Seamline Metadata**: Download Vivid 30 cm / 15 cm GeoTIFFs (`get_maxar_wms_basemap()`), automatically tile and mosaic large areas (`get_maxar_wms_tiles()`), and retrieve vector seamline polygons with acquisition dates and sensor metadata via OGC WFS (`vantor_get_seamlines()`).
+- **Account Quota Monitoring**: Query credit limits and consumption breakdowns via the Usage API v2 (`vantor_get_usage()`).
+- **Interactive `leaflet` & `shiny` Integration**: Stream WMTS/WMS basemaps, seamlines, and archive strips in `leaflet` (`add_vantor_basemap()`, `add_vantor_seamlines()`, `add_vantor_imagery()`), or embed drop-in Shiny modules (`vantor_auth_ui()`, `vantor_explorer_ui()`, `run_vantor_demo_app()`).
 
 ## Installation
 
-You can install the development version of `vantorr` from
-[GitHub](https://github.com/michael-cw/vantorr) with:
+You can install the development version of `vantorr` from [GitHub](https://github.com/michael-cw/vantorr) with:
 
-``` r
+```r
 # install.packages("devtools")
-devtools::install_github("michael-cw/vantorr, build_vignettes = TRUE")
+devtools::install_github("michael-cw/vantorr", build_vignettes = TRUE)
 ```
 
 ## Authentication
 
-The Vantor API supports both **API Keys** (long-lived, up to 180 days;
-required for browser-based `leaflet` tile streaming) and **OAuth 2.0
-Bearer Tokens** (session-based, with automatic refresh).
+The Vantor API supports both **API Keys** (long-lived, up to 180 days) and **OAuth 2.0 Bearer Tokens** (session-based, with automatic refresh). Note that different Vantor API services accept different credential types:
 
-You can configure credentials in your `.Renviron` file
-(`VANTOR_API_KEY`, or `VANTOR_USERNAME` and `VANTOR_PASSWORD`) or set
-them interactively for your R session with `vantor_auth()`:
+- **OGC & Non-Administrative APIs** (`get_maxar_wms_basemap()`, `get_maxar_wms_tiles()`, `vantor_get_seamlines()`): Accept **either** an API Key or an OAuth2 Bearer Token.
+- **Browser-Based `leaflet` Tile Layers** (`add_vantor_basemap()`, `add_vantor_seamlines()`, `add_vantor_imagery()`): Require an **API Key** (`maxar_api_key`).
+- **Account Services / Admin APIs** (`vantor_get_usage()`): Require an **OAuth2 Bearer Token** (`username` and `password`), as Vantor's Admin APIs do not accept API keys.
 
-``` r
+You can configure credentials in your `.Renviron` file (`VANTOR_API_KEY`, or `VANTOR_USERNAME` and `VANTOR_PASSWORD`) or set them interactively for your R session with `vantor_auth()`:
+
+
+```r
 library(vantorr)
 
-# Option 1: Set an API Key for the session
+# Option 1: Set an API Key for the session (for OGC & Leaflet functions)
 vantor_auth(api_key = "your_api_key")
 
-# Option 2: Authenticate via OAuth2 (automatically caches and refreshes tokens)
+# Option 2: Authenticate via OAuth2 (automatically caches and refreshes tokens;
+# required for Admin endpoints such as vantor_get_usage())
 vantor_auth(username = "your_email@example.com", password = "your_password")
 
-# Check account credit usage and quota
+# Check account credit usage and quota (requires OAuth2 Bearer token & Admin permissions)
 usage <- vantor_get_usage(category = "PRODUCT", unit = "CREDIT")
 ```
 
 ## Retrieving WMS Basemaps & Seamlines
 
-`vantorr` accepts spatial objects from `sf`, `terra`, and `stars` (as
-well as numeric bounding boxes in `EPSG:4326` or `EPSG:3857`) and
-automatically transforms coordinates to the required projection.
+`vantorr` accepts spatial objects from `sf`, `terra`, and `stars` (as well as numeric bounding boxes in `EPSG:4326` or `EPSG:3857`) and automatically transforms coordinates to the required projection.
 
-``` r
+
+```r
 library(vantorr)
 library(sf)
 library(terra)
@@ -101,11 +86,10 @@ terra::plotRGB(basemap_rast, r = 1, g = 2, b = 3, stretch = "lin")
 seamlines_sf <- vantor_get_seamlines(bbox = aoi, product = "VIVID_STANDARD_30")
 ```
 
-For larger areas of interest that exceed single-request pixel limits,
-use `get_maxar_wms_tiles()` to automatically grid, download, and mosaic
-tiles:
+For larger areas of interest that exceed single-request pixel limits, use `get_maxar_wms_tiles()` to automatically grid, download, and mosaic tiles:
 
-``` r
+
+```r
 large_mosaic <- get_maxar_wms_tiles(
   bbox = aoi,
   tile_size = 2500,
@@ -117,12 +101,10 @@ large_mosaic <- get_maxar_wms_tiles(
 
 ## Interactive `leaflet` Maps & R Shiny Modules
 
-Stream Vantor Vivid mosaics (`WMTS` or `WMS`), seamline cutlines
-(`mode = "wms"` or interactive `mode = "wfs"` polygons), and archive
-strips directly into `leaflet` maps, or embed the pre-built Shiny
-modules (`vantor_auth_ui()` and `vantor_explorer_ui()`):
+Stream Vantor Vivid mosaics (`WMTS` or `WMS`), seamline cutlines (`mode = "wms"` or interactive `mode = "wfs"` polygons), and archive strips directly into `leaflet` maps, or embed the pre-built Shiny modules (`vantor_auth_ui()` and `vantor_explorer_ui()`):
 
-``` r
+
+```r
 library(leaflet)
 library(vantorr)
 
@@ -141,10 +123,10 @@ if (interactive()) {
 }
 ```
 
-See `vignette("shiny-leaflet-integration", package = "vantorr")` or
-visit the [companion website](https://michael-cw.github.io/vantorr/) for
-a complete guide to building custom `leaflet` + `shiny` applications.
+See `vignette("shiny-leaflet-integration", package = "vantorr")` or visit the [companion website](https://michael-cw.github.io/vantorr/) for a complete guide to building custom `leaflet` + `shiny` applications.
 
 ## License
 
 MIT
+
+

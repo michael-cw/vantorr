@@ -13,6 +13,17 @@
 #' - `VANTOR_USERNAME` or `MAXAR_USERNAME`
 #' - `VANTOR_PASSWORD` or `MAXAR_PASSWORD`
 #'
+#' @note **Authentication Scope Across Vantor Endpoints:**
+#' - **OGC & Non-Administrative APIs** ([get_maxar_wms_basemap()],
+#'   [get_maxar_wms_tiles()], [vantor_get_seamlines()]): Accept **either** an
+#'   API key (`maxar-api-key`) or an OAuth2 Bearer token.
+#' - **Browser-Based `leaflet` Tile Layers** ([add_vantor_basemap()],
+#'   [add_vantor_seamlines()], [add_vantor_imagery()], [vantor_wmts_url()]):
+#'   Require an **API key** (`maxar_api_key` URL query parameter).
+#' - **Account Services / Admin APIs** ([vantor_get_usage()]): Require an
+#'   **OAuth2 Bearer token** (`username` and `password`, or `token`). Per the
+#'   Vantor API specification, Admin APIs do not accept API keys.
+#'
 #' @param api_key Character string. A Vantor/Maxar API key.
 #' @param username Character string. Email address for OAuth2 authentication.
 #' @param password Character string. Password for OAuth2 authentication.
@@ -42,34 +53,44 @@ vantor_auth <- function(api_key = NULL,
                         refresh_token = NULL,
                         verbose = getOption("vantorr.verbose", TRUE)) {
 
+  has_explicit <- FALSE
+  res <- NULL
+
   if (!is.null(api_key) && nzchar(api_key)) {
     .vantorr_env$api_key <- api_key
+    has_explicit <- TRUE
     if (verbose) cli::cli_alert_success("Vantor API key stored for this session.")
-    return(invisible(list(type = "api_key", api_key = api_key)))
+    res <- list(type = "api_key", api_key = api_key)
   }
 
   if (!is.null(token) && nzchar(token)) {
     .vantorr_env$access_token <- token
     .vantorr_env$refresh_token <- refresh_token
     .vantorr_env$expires_at <- Sys.time() + 3600
+    has_explicit <- TRUE
     if (verbose) cli::cli_alert_success("Vantor bearer token stored for this session.")
-    return(invisible(list(
+    res <- list(
       type = "bearer",
       access_token = token,
       refresh_token = refresh_token,
       expires_at = .vantorr_env$expires_at
-    )))
+    )
   }
 
   if (!is.null(username) && nzchar(username) && !is.null(password) && nzchar(password)) {
+    has_explicit <- TRUE
     tok <- get_maxar_token(username = username, password = password, verbose = verbose)
-    if (is.null(tok)) return(invisible(NULL))
-    return(invisible(list(
+    if (is.null(tok)) return(invisible(res))
+    res <- list(
       type = "bearer",
       access_token = .vantorr_env$access_token,
       refresh_token = .vantorr_env$refresh_token,
       expires_at = .vantorr_env$expires_at
-    )))
+    )
+  }
+
+  if (has_explicit) {
+    return(invisible(res))
   }
 
   # Fallback to environment variables

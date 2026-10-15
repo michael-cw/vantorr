@@ -45,6 +45,20 @@ arguments are not explicitly supplied:
 \item \code{VANTOR_PASSWORD} or \code{MAXAR_PASSWORD}
 }
 }
+\note{
+\strong{Authentication Scope Across Vantor Endpoints:}
+\itemize{
+\item \strong{OGC & Non-Administrative APIs} (\code{\link[=get_maxar_wms_basemap]{get_maxar_wms_basemap()}},
+\code{\link[=get_maxar_wms_tiles]{get_maxar_wms_tiles()}}, \code{\link[=vantor_get_seamlines]{vantor_get_seamlines()}}): Accept \strong{either} an
+API key (\code{maxar-api-key}) or an OAuth2 Bearer token.
+\item \strong{Browser-Based \code{leaflet} Tile Layers} (\code{\link[=add_vantor_basemap]{add_vantor_basemap()}},
+\code{\link[=add_vantor_seamlines]{add_vantor_seamlines()}}, \code{\link[=add_vantor_imagery]{add_vantor_imagery()}}, \code{\link[=vantor_wmts_url]{vantor_wmts_url()}}):
+Require an \strong{API key} (\code{maxar_api_key} URL query parameter).
+\item \strong{Account Services / Admin APIs} (\code{\link[=vantor_get_usage]{vantor_get_usage()}}): Require an
+\strong{OAuth2 Bearer token} (\code{username} and \code{password}, or \code{token}). Per the
+Vantor API specification, Admin APIs do not accept API keys.
+}
+}
 \examples{
 # Check if credentials are configured in the environment
 vantor_has_auth(verbose = FALSE)

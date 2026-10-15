@@ -120,5 +120,9 @@ test_that("vantor_get_seamlines and vantor_get_usage validate inputs", {
 
   expect_error(vantor_get_seamlines(), "bbox")
   expect_error(vantor_get_seamlines(c(-105, 39.7, -104.9, 39.8), verbose = FALSE), "No Vantor/Maxar authentication")
-  expect_error(vantor_get_usage(verbose = FALSE), "No Vantor/Maxar authentication")
+  expect_error(vantor_get_usage(verbose = FALSE), "OAuth2 bearer token")
+
+  # Setting only an API key should produce a specific error explaining Admin APIs do not accept API keys
+  vantor_auth(api_key = "only_an_api_key", verbose = FALSE)
+  expect_error(vantor_get_usage(verbose = FALSE), "API keys.*are not accepted by Vantor Admin APIs")
 })

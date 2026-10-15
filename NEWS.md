@@ -8,7 +8,7 @@
     * Added `add_vantor_imagery()` (and alias `addVantorImagery()`) to stream specific archive strips (`feature_id` or custom `cql_filter`) via `/streaming/v1/ogc/wms`.
   * **Seamlines OGC WFS & Usage API v2 (`vantor_seamlines_usage.R`)**:
     * Added `vantor_get_seamlines()` to fetch basemap seamline polygons and acquisition metadata (`acq_time`, `gsd`, `sensor`, `ona`, `catid`) as an `sf` object via OGC WFS.
-    * Added `vantor_get_usage()` to query the Usage API (`v2/activation/overview`) for account credit limits, remaining quota, and consumption breakdowns.
+    * Added `vantor_get_usage()` to query the Account Services Usage API (`v2/activation/overview`, requiring OAuth2 Bearer Token authentication) for account credit limits, remaining quota, and consumption breakdowns.
   * **R Shiny Application Modules (`vantor_shiny.R`, `vantor_api_getmap.R`)**:
     * Added drop-in Shiny modules `vantor_auth_ui()` / `vantor_auth_server()` (with automatic periodic OAuth2 token refresh) and `vantor_explorer_ui()` / `vantor_explorer_server()`, plus `run_vantor_demo_app()`.
     * Added `progress_callback` argument to `get_maxar_wms_tiles()` for seamless integration with `shiny::incProgress()`.

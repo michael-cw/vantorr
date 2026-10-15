@@ -202,12 +202,27 @@ vantor_auth_server <- function(id,
     })
 
     shiny::observeEvent(input$usage_btn, {
-      if (!vantor_has_auth(verbose = FALSE)) {
-        shiny::showNotification("Authenticate first to check usage.", type = "warning")
+      has_bearer <- (!is.null(.vantorr_env$access_token) && nzchar(.vantorr_env$access_token)) ||
+        (nzchar(Sys.getenv("VANTOR_USERNAME", unset = Sys.getenv("MAXAR_USERNAME", unset = ""))) &&
+         nzchar(Sys.getenv("VANTOR_PASSWORD", unset = Sys.getenv("MAXAR_PASSWORD", unset = ""))))
+
+      if (!has_bearer) {
+        shiny::showNotification(
+          "The Usage API is an Admin endpoint and requires OAuth2 (Username & Password) authentication rather than an API Key.",
+          type = "warning",
+          duration = 8
+        )
         return()
       }
+
       shiny::withProgress(message = "Querying Vantor Usage API...", value = 0.5, {
-        usage_res <- vantor_get_usage(verbose = verbose)
+        usage_res <- tryCatch(
+          vantor_get_usage(verbose = verbose),
+          error = function(e) {
+            shiny::showNotification(conditionMessage(e), type = "error")
+            NULL
+          }
+        )
         state$usage_info <- usage_res
       })
     })

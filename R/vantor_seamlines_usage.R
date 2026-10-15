@@ -152,13 +152,24 @@ vantor_get_seamlines <- function(bbox,
 #' Useful for monitoring account quota in interactive R sessions or Shiny
 #' dashboards before launching large multi-tile downloads.
 #'
+#' @note **Authentication Requirement (OAuth2 Bearer Token Only):**
+#' The Usage API (`https://api.maxar.com/usage/v2/activation/overview`) is part
+#' of the Vantor **Account Services (Admin API)**
+#' (<https://developers.maxar.com/docs/admin/guides/usage>). Per the Vantor API
+#' specification, **API keys (`maxar-api-key`) are not accepted by Admin APIs**.
+#' You must authenticate using an OAuth2 Bearer Token via
+#' `vantor_auth(username = "...", password = "...")` (or `VANTOR_USERNAME` and
+#' `VANTOR_PASSWORD` in `.Renviron`), and your account must have Admin
+#' permissions to view activation usage.
+#'
 #' @param category Character string. Grouping category for usage breakdown.
 #'   One of `"PRODUCT"` (default), `"DAY"`, `"WEEK"`, `"MONTH"`, or `"QUARTER"`.
 #' @param unit Character string. Measurement unit for usage metrics.
 #'   One of `"CREDIT"` (default), `"FEATURE_COUNT"`, `"REQUEST_COUNT"`,
 #'   `"MAP_VIEW"`, `"GIGABYTE"`, or `"SQ_KM"`.
-#' @param token Character string. Optional OAuth2 bearer token.
-#' @param api_key Character string. Optional Maxar/Vantor API key.
+#' @param token Character string. Optional OAuth2 bearer token (`access_token`
+#'   from [get_maxar_token()]). If `NULL`, resolved from the active OAuth2
+#'   session cache or `VANTOR_USERNAME` / `VANTOR_PASSWORD` environment variables.
 #' @param verbose Logical. Print summary messages. Default is
 #'   `getOption("vantorr.verbose", TRUE)`.
 #'
@@ -168,7 +179,7 @@ vantor_get_seamlines <- function(bbox,
 #'
 #' @examples
 #' \donttest{
-#' if (vantor_has_auth()) {
+#' if (nzchar(Sys.getenv("VANTOR_USERNAME")) && nzchar(Sys.getenv("VANTOR_PASSWORD"))) {
 #'   usage <- vantor_get_usage(category = "PRODUCT", unit = "CREDIT", verbose = FALSE)
 #' }
 #' }
@@ -177,20 +188,18 @@ vantor_get_seamlines <- function(bbox,
 vantor_get_usage <- function(category = c("PRODUCT", "DAY", "WEEK", "MONTH", "QUARTER"),
                              unit = c("CREDIT", "FEATURE_COUNT", "REQUEST_COUNT", "MAP_VIEW", "GIGABYTE", "SQ_KM"),
                              token = NULL,
-                             api_key = NULL,
                              verbose = getOption("vantorr.verbose", TRUE)) {
 
   category <- match.arg(category)
   unit <- match.arg(unit)
 
-  auth <- .resolve_auth(token = token, api_key = api_key, verbose = verbose)
+  bearer_token <- .resolve_bearer_auth(token = token, verbose = verbose)
 
   usage_url <- "https://api.maxar.com/usage/v2/activation/overview"
 
   request <- create_maxar_request(
     url = usage_url,
-    token = if (identical(auth$type, "bearer")) auth$value else NULL,
-    api_key = if (identical(auth$type, "api_key")) auth$value else NULL
+    token = bearer_token
   ) |>
     httr2::req_url_query(
       category = category,
@@ -260,7 +269,60 @@ vantor_get_usage <- function(category = c("PRODUCT", "DAY", "WEEK", "MONTH", "QU
   usage_data
 }
 
+# Internal helper to resolve an OAuth2 Bearer token for Admin APIs (e.g., Usage API)
+.resolve_bearer_auth <- function(token = NULL, verbose = FALSE) {
+  if (!is.null(token) && nzchar(token)) {
+    return(token)
+  }
+
+  # Check session cache for bearer token
+  if (!is.null(.vantorr_env$access_token) && nzchar(.vantorr_env$access_token)) {
+    if (!is.null(.vantorr_env$expires_at) && Sys.time() >= (.vantorr_env$expires_at - 60)) {
+      if (!is.null(.vantorr_env$refresh_token) && nzchar(.vantorr_env$refresh_token)) {
+        if (verbose) cli::cli_alert_info("Session token expiring; refreshing automatically...")
+        refreshed <- refresh_maxar_token(.vantorr_env$refresh_token, verbose = verbose)
+        if (!is.null(refreshed) && !is.null(refreshed$access_token)) {
+          return(refreshed$access_token)
+        }
+      }
+    } else {
+      return(.vantorr_env$access_token)
+    }
+  }
+
+  # Check environment variables for username & password
+  env_user <- Sys.getenv("VANTOR_USERNAME", unset = Sys.getenv("MAXAR_USERNAME", unset = ""))
+  env_pass <- Sys.getenv("VANTOR_PASSWORD", unset = Sys.getenv("MAXAR_PASSWORD", unset = ""))
+  if (nzchar(env_user) && nzchar(env_pass)) {
+    if (verbose) {
+      cli::cli_alert_info("Authenticating with OAuth2 credentials from environment variables...")
+    }
+    tok <- get_maxar_token(username = env_user, password = env_pass, verbose = verbose)
+    if (!is.null(tok) && !is.null(tok$access_token)) {
+      return(tok$access_token)
+    }
+  }
+
+  # If only an API key is present, explain specifically why Admin/Usage API rejects it
+  has_key <- (!is.null(.vantorr_env$api_key) && nzchar(.vantorr_env$api_key)) ||
+    nzchar(Sys.getenv("VANTOR_API_KEY", unset = Sys.getenv("MAXAR_API_KEY", unset = "")))
+
+  if (has_key) {
+    cli::cli_abort(c(
+      "The Vantor Usage API ({.fn vantor_get_usage}) is an Account Services (Admin) endpoint and requires an OAuth2 Bearer token.",
+      "!" = "API keys ({.code maxar-api-key}) are not accepted by Vantor Admin APIs.",
+      "i" = "Authenticate with {.code vantor_auth(username = ..., password = ...)}, supply {.arg token}, or set {.envvar VANTOR_USERNAME} and {.envvar VANTOR_PASSWORD} in {.file .Renviron}."
+    ))
+  }
+
+  cli::cli_abort(c(
+    "No Vantor/Maxar OAuth2 bearer token or username/password credentials found for {.fn vantor_get_usage}.",
+    "i" = "Call {.code vantor_auth(username = ..., password = ...)}, supply {.arg token}, or set {.envvar VANTOR_USERNAME} and {.envvar VANTOR_PASSWORD} in {.file .Renviron}."
+  ))
+}
+
 # Internal null-coalescing helper
 `%||%` <- function(x, y) {
   if (is.null(x) || length(x) == 0L) y else x
 }
+
