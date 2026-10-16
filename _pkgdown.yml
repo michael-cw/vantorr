@@ -27,6 +27,10 @@ navbar:
       menu:
         - text: Interactive Leaflet Maps and Shiny Apps
           href: articles/shiny-leaflet-integration.html
+        - text: Producing Fieldwork Resources for Survey Data Collection
+          href: articles/fieldwork-survey-resources.html
+        - text: Creating Spatial Resources for Survey Solutions Fieldwork
+          href: articles/survey-solutions-workflow.html
 
 reference:
   - title: Authentication & Account Usage
@@ -50,6 +54,22 @@ reference:
       - get_maxar_wms_basemap
       - get_maxar_wms_tiles
       - vantor_get_seamlines
+
+  - title: Fieldwork & Survey Data Collection Resources
+    desc: >
+      Generate alphanumeric survey index grids, audit imagery vintage across
+      Enumeration Areas, encode offline Plus Codes, export CAPI preload files
+      (ODK, Kobo, Survey123), print multi-page PDF Field Atlases, and bundle
+      offline GeoPackages and Esri Tile Packages (.tpk / .tpkx) for Survey
+      Solutions and ArcGIS Field Maps.
+    contents:
+      - vantor_survey_grid
+      - vantor_vintage_report
+      - vantor_plus_code
+      - vantor_export_capi
+      - vantor_field_atlas
+      - vantor_offline_package
+      - vantor_write_tpk
 
   - title: Interactive Mapping (leaflet)
     desc: >
@@ -81,3 +101,4 @@ reference:
     contents:
       - vantor_as_bbox
       - convert_bbox_to_3857
+

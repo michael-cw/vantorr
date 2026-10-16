@@ -1,0 +1,351 @@
+---
+title: "Creating Spatial Resources for World Bank Survey Solutions Fieldwork"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Creating Spatial Resources for World Bank Survey Solutions Fieldwork}
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+**World Bank Survey Solutions** supports offline satellite basemaps and vector boundary overlays on Interviewer and Supervisor tablets (powered by the **ArcGIS Maps SDK for .NET v200.x** from Survey Solutions v24.09 onwards).
+
+However, preparing satellite imagery and vector files that pass **Survey Solutions Headquarters** server-side validation (`Survey Setup -> Maps -> Upload Map`) and render accurately on offline Android tablets requires strict adherence to Esri and Survey Solutions packaging conventions:
+
+| Resource Type | Format Uploaded to Survey Solutions HQ | Required Coordinate System | Key Survey Solutions Requirements |
+|:---|:---|:---|:---|
+| **Zoomable Tile Basemap** | `.tpk` inside a flat `.zip` (`<name>_tpk.zip`) | Web Mercator (`WKID: 102100` / `EPSG:3857`) | Must contain `v101/Layers/conf.xml`, `conf.cdi`, `esriinfo/iteminfo.xml`, and `servicedescriptions/mapserver/mapserver.json` with a top-level `"contents"` object (`fullExtent`, `minScale`, `maxScale`). |
+| **Single-Resolution Raster Basemap** | `.tif` inside a flat `.zip` | Web Mercator (`EPSG:3857` / `WGS 84`) | Valid GeoTIFF header tags (`GeoTiffInfoReader`); automatically reprojected to `EPSG:3857` by `vantor_offline_package()`. |
+| **Vector Boundary / Point Overlay** | `.shp`, `.shx`, `.dbf`, `.prj` inside a flat `.zip` (`<name>_shapes.zip`) | Geographic `WGS 84` (`EPSG:4326`) | Mandatory `.shp`, `.shx`, `.dbf` at the archive root; an optional `label` attribute column is rendered automatically as feature labels on the tablet map. |
+| **Assignment Preload Table** | Tab-delimited `.tab` (`<name>_suso_preload.tab`) | Geographic `WGS 84` (`EPSG:4326`) | Composite `<gps_var>__Latitude` & `<gps_var>__Longitude` columns for **Map Dashboard** household pins, `_target_area` (from `cell_id`), `plus_code` for offline cover-page routing, and `imagery_acq_date`. |
+
+### Why Standard macOS `.zip` Archives Fail on Survey Solutions HQ
+
+When users compress a `.tpk` or `.shp` file using macOS Finder (*Right-click $\rightarrow$ Compress*), macOS injects hidden AppleDouble resource fork entries (`__MACOSX/._filename.tpk`). Survey Solutions Headquarters validates every entry in the uploaded `.zip` archive via `MapFilesValidator.CheckFileNamesOnInvalidChars` and rejects the upload with:
+
+> `The file __MACOSX/._<filename>.tpk name includes invalid characters.`
+
+Additionally, if files are zipped inside a subfolder rather than at the root of the `.zip` archive, Survey Solutions HQ cannot locate the map files during extraction.
+
+`vantorr` handles all of these requirements automatically in pure R—without requiring ArcGIS Pro, ArcMap, or ArcGIS Online credits—using `vantor_write_tpk()`, `vantor_export_capi()`, and `vantor_offline_package()`, and integrates directly with the [**`SurveySolutionsAPIv2`**](https://github.com/michael-cw/SurveySolutionsAPIv2) package for programmatic server uploads and assignment creation.
+
+---
+
+## 1. Delineating Enumeration Areas, Sample Points & `.tab` Assignment Preloads
+
+Unlike ODK Collect or KoboToolbox (which preload CSV/GeoJSON files with a single space-separated `odk_geopoint` string), **Survey Solutions Headquarters** (`Survey Setup -> Questionnaires -> Upload Assignments`) requires **tab-delimited (`.tab`)** preload files with specific column naming conventions:
+
+- **`<gps_var>__Latitude` and `<gps_var>__Longitude`**: To display sampled households as interactive pins on the Interviewer tablet's **Map Dashboard** (overlaid directly on top of the offline `.tpk` basemap), your questionnaire in Survey Solutions Designer should include an **Identifying** Geography (`GPS`) question (e.g., variable name `hh_gps`). Survey Solutions preloads GPS questions via composite column headers separated by a double underscore (`__`): `hh_gps__Latitude`, `hh_gps__Longitude`, `hh_gps__Accuracy`, `hh_gps__Altitude`, and `hh_gps__Timestamp`.
+- **`_target_area`**: Survey Solutions' system column (up to 64 characters) that groups assignments by geographic sector (`cell_id`, e.g., `"A1"`, `"B2"`) on the Interviewer Map Dashboard.
+- **`plus_code` & `imagery_acq_date`**: Preloaded as `Identifying` text questions on the questionnaire cover page. Because `.tpk` satellite basemaps do not perform turn-by-turn road routing, enumerators can copy the 11-character Open Location Code (`plus_code`) from the cover page into Google Maps or OsmAnd to get offline turn-by-turn driving/walking directions to within 3 meters of the dwelling, then switch back to the Survey Solutions Map Dashboard and `.tpk` basemap for the final approach. Meanwhile, `imagery_acq_date` tells the enumerator when the Vantor satellite image was captured so they can distinguish newly constructed buildings from older structures.
+
+Setting `output_suso_tab` and `suso_gps_var = "hh_gps"` in `vantor_export_capi()` generates this exact `.tab` file automatically:
+
+```{r}
+library(vantorr)
+library(sf)
+
+# Define a small Enumeration Area bounding box in WGS84 (EPSG:4326)
+ea_aoi <- st_bbox(
+  c(xmin = -105.004, ymin = 39.736, xmax = -105.000, ymax = 39.740),
+  crs = st_crs(4326)
+)
+
+# 1. Generate 250m Enumeration Area sub-cells (A1, A2, B1, B2)
+ea_grid <- vantor_survey_grid(
+  aoi = ea_aoi,
+  cell_size = 250,
+  shape = "square",
+  verbose = FALSE
+)
+
+# 2. Define sampled household locations inside the EA
+hh_samples <- st_as_sf(
+  data.frame(
+    hh_id = c("EA01-HH01", "EA01-HH02", "EA01-HH03"),
+    lon = c(-105.0030, -105.0015, -105.0010),
+    lat = c(39.7388, 39.7382, 39.7370)
+  ),
+  coords = c("lon", "lat"),
+  crs = 4326
+)
+
+suso_tab_file <- tempfile(pattern = "suso_assignments_", fileext = ".tab")
+
+capi_pts <- vantor_export_capi(
+  samples         = hh_samples,
+  id_col          = "hh_id",
+  grid            = ea_grid,
+  output_suso_tab = suso_tab_file,
+  suso_gps_var    = "hh_gps",
+  verbose         = FALSE
+)
+
+# Inspect the returned sf object (coordinate columns use <suso_gps_var>__Latitude / __Longitude)
+st_drop_geometry(capi_pts)[, c(
+  "sample_id", "cell_id", "plus_code",
+  "hh_gps__Latitude", "hh_gps__Longitude"
+)]
+
+# Inspect the generated Survey Solutions .tab preload table
+read.delim(suso_tab_file, check.names = FALSE)[, c(
+  "sample_id", "cell_id", "plus_code",
+  "hh_gps__Latitude", "hh_gps__Longitude",
+  "_target_area"
+)]
+```
+
+---
+
+## 2. Creating a Zoomable `.tpk` Basemap (`vantor_write_tpk()`)
+
+### Choosing Zoom Levels to Conserve Vantor Credits
+
+Each Web Mercator zoom level quadruples the number of $256 \times 256$ pixel tiles required to cover an Area of Interest:
+
+- **Zoom 15** ($\approx 4.77\text{ m/px}$, Scale $\approx 1:18,056$): Neighborhood context overview.
+- **Zoom 16** ($\approx 2.39\text{ m/px}$, Scale $\approx 1:9,028$): Enumeration Area and road network view.
+- **Zoom 17** ($\approx 1.19\text{ m/px}$, Scale $\approx 1:4,514$): Building block and compound level.
+- **Zoom 18** ($\approx 0.60\text{ m/px}$, Scale $\approx 1:2,257$): Individual rooftop and dwelling identification.
+- **Zoom 19** ($\approx 0.30\text{ m/px}$, Scale $\approx 1:1,128$): Full native 30 cm Vantor Vivid resolution.
+
+For testing or small Enumeration Areas ($\approx 200\text{ m} \times 200\text{ m}$), `zoom = 15:17` requires only **6 to 9 tiles** in total. `vantor_write_tpk()` enforces a safety cap (`max_tiles = 2500L`) so you never accidentally trigger a massive download.
+
+### Online Workflow (Direct from Vantor WMS)
+
+When authenticated via `vantor_auth()`, pass your AOI (`x` or `aoi`) and set `zip_for_suso = TRUE`:
+
+```{r, eval = FALSE}
+# Authenticate with your Vantor API Key
+vantor_auth(api_key = Sys.getenv("VANTOR_API_KEY"))
+
+# Define a compact ~200m x 200m test AOI
+tiny_aoi <- st_bbox(
+  c(xmin = -105.002, ymin = 39.738, xmax = -105.000, ymax = 39.740),
+  crs = st_crs(4326)
+)
+
+# Generate both test_vantor_suso.tpk and the clean test_vantor_suso_tpk.zip upload archive
+tpk_file <- vantor_write_tpk(
+  aoi          = tiny_aoi,
+  output_file  = "test_vantor_suso.tpk",
+  zoom         = 15:17,
+  format       = "tpk",
+  product      = "VIVID_STANDARD_30",
+  zip_for_suso = TRUE
+)
+```
+
+### Offline Demonstration (From a Local `SpatRaster` / GeoTIFF)
+
+If you have already downloaded a GeoTIFF using `get_maxar_wms_basemap()`, you can slice it offline into a `.tpk` package without making any additional API requests:
+
+```{r}
+if (requireNamespace("terra", quietly = TRUE)) {
+  # Create a synthetic 3-band RGB raster over our EA (in WGS84)
+  r_ea <- terra::rast(
+    xmin = -105.004, xmax = -105.000,
+    ymin = 39.736, ymax = 39.740,
+    nrows = 128, ncols = 128, nlyrs = 3,
+    crs = "EPSG:4326"
+  )
+  set.seed(42)
+  terra::values(r_ea) <- sample(60:220, terra::ncell(r_ea) * 3, replace = TRUE)
+
+  out_tpk <- file.path(tempdir(), "ea_01_basemap.tpk")
+
+  tpk_res <- vantor_write_tpk(
+    raster       = r_ea,
+    output_file  = out_tpk,
+    zoom         = 15:16,
+    format       = "tpk",
+    zip_for_suso = TRUE,
+    verbose      = FALSE
+  )
+
+  # The clean Survey Solutions upload archive is named *_tpk.zip:
+  suso_zip <- attr(tpk_res, "suso_zip_path")
+  basename(c(tpk_res, suso_zip))
+
+  # Verify the outer _tpk.zip contains only the .tpk at the root (no __MACOSX metadata)
+  utils::unzip(suso_zip, list = TRUE)$Name
+
+  # Verify the internal Esri Compact Cache V1 structure inside the .tpk
+  utils::unzip(tpk_res, list = TRUE)$Name
+}
+```
+
+### Understanding `WKID: 102100`, `MinScale`, and `MaxScale` in Survey Solutions HQ
+
+Once you upload `ea_01_basemap_tpk.zip` to Survey Solutions Headquarters (`Survey Setup -> Maps -> Upload Map`) and click on the uploaded map to view its **Details / Preview**, you will see metadata extracted from `servicedescriptions/mapserver/mapserver.json`:
+
+- **`WKID: 102100`**: This is Esri's canonical authority code for `WGS_1984_Web_Mercator_Auxiliary_Sphere` (`EPSG:3857`). In `mapserver.json`, Esri stores `"spatialReference": { "wkid": 102100, "latestWkid": 3857 }`. Survey Solutions Headquarters reads `fullExtent.spatialReference.wkid` (`102100`) and uses `{"wkid": 102100}` in its ArcGIS JS MapPreview widget. Spatially, `102100` and `3857` are identical.
+- **`MinScale` and `MaxScale`**: For `zoom = 15:17`, Survey Solutions reports `MinScale = 18055.99` (zoom 15 overview scale) and `MaxScale = 4513.99` (zoom 17 close-up scale). On the interviewer tablet, Survey Solutions configures the `ArcGISTiledLayer` so enumerators can pan and zoom smoothly across the cached pyramid.
+
+---
+
+## 3. One-Call Bundling: `.tpk`, `.tif`, `.tab`, and Label-Ready Shapefiles (`_shapes.zip`)
+
+In addition to a `.tpk` raster basemap, field supervisors often overlay Enumeration Area polygon boundaries or household sample points as **Esri Shapefiles** in Survey Solutions.
+
+When Survey Solutions imports a Shapefile (`.shp`, `.shx`, `.dbf`, `.prj`), it checks the `.dbf` attribute table for a column named **`label`** (case-insensitive). If present, Survey Solutions renders those labels directly on top of the map in both Headquarters Map Preview and the Interviewer app (`$feature.label`).
+
+`vantor_offline_package()` automates this entire bundle in a single call:
+
+1. Populates the `label` attribute column on `grid` (from `cell_id`, e.g., `"A1"`, `"A2"`) and `samples` (from `sample_id`, e.g., `"EA01-HH01"`).
+2. Exports `EPSG:4326` Shapefiles and packages them into `<package_name>_shapes.zip` at the root level (no subfolders, no `__MACOSX` forks).
+3. Generates `<package_name>_suso_preload.tab` (with `<suso_gps_var>__Latitude`, `<suso_gps_var>__Longitude`, and `_target_area`) alongside `<package_name>_samples.csv`.
+4. Reprojects any raster basemap to Web Mercator (`EPSG:3857`) `.tif`.
+5. Generates both `<package_name>.tpk` and `<package_name>_tpk.zip`.
+
+```{r}
+if (requireNamespace("terra", quietly = TRUE)) {
+  suso_bundle <- vantor_offline_package(
+    grid              = ea_grid,
+    samples           = capi_pts,
+    raster            = r_ea,
+    create_tpk        = "tpk",
+    tpk_zoom          = 15:16,
+    create_shapefiles = TRUE,
+    suso_gps_var      = "hh_gps",
+    package_name      = "suso_ea01",
+    verbose           = FALSE
+  )
+
+  # Files ready for Survey Solutions Headquarters upload:
+  basename(c(
+    suso_bundle$tpk_zip_path,
+    suso_bundle$shapefile_zip_path,
+    suso_bundle$suso_tab_path,
+    suso_bundle$raster_path,
+    suso_bundle$csv_path
+  ))
+
+  # Inspect the root-level files inside suso_ea01_shapes.zip:
+  utils::unzip(suso_bundle$shapefile_zip_path, list = TRUE)$Name
+}
+```
+
+---
+
+## 4. Manual Upload via the Survey Solutions HQ Web Interface
+
+1. Log in to **Survey Solutions Headquarters** as an `Administrator` or `Headquarter` user.
+2. **Upload Maps**: Navigate to **Survey Setup $\rightarrow$ Maps**, click **Upload Map**, and select **`suso_ea01_tpk.zip`** (and optionally **`suso_ea01_shapes.zip`**). Click on the uploaded map entry to verify its bounding box in **Map Preview** and confirm its `MinScale`, `MaxScale`, and `WKID` (`102100`).
+3. **Upload Preloaded Assignments**: Navigate to **Survey Setup $\rightarrow$ Questionnaires**, click your survey questionnaire, select **Upload Assignments**, and upload **`suso_ea01_suso_preload.tab`**.
+4. **Bulk-Assign Maps to Interviewers (`usermaps.tab`)**: You can link uploaded `.tpk` and `.shp` maps to specific Interviewer accounts by uploading a tab-separated `usermaps.tab` file (`Survey Setup -> Maps -> Upload User-to-Map Assignments`) with two columns (`map` and `users`):
+
+```{r}
+usermaps_df <- data.frame(
+  map   = c("suso_ea01.tpk", "suso_ea01_grid.shp"),
+  users = c("interviewer_01, interviewer_02", "interviewer_01, interviewer_02"),
+  stringsAsFactors = FALSE
+)
+
+usermaps_tab <- file.path(tempdir(), "usermaps.tab")
+utils::write.table(
+  usermaps_df,
+  file      = usermaps_tab,
+  sep       = "\t",
+  row.names = FALSE,
+  quote     = FALSE
+)
+
+cat(readLines(usermaps_tab), sep = "\n")
+```
+
+---
+
+## 5. Automated End-to-End Deployment with `SurveySolutionsAPIv2`
+
+Instead of manually uploading `.zip` map archives and `.tab` assignment files through the web browser, you can combine `vantorr` with the [**`SurveySolutionsAPIv2`**](https://github.com/michael-cw/SurveySolutionsAPIv2) R package (`httr2` + GraphQL API v2 client for World Bank Survey Solutions) to automate the entire fieldwork deployment pipeline directly from R:
+
+| Step | `vantorr` Output | `SurveySolutionsAPIv2` Function | Action on Survey Solutions HQ Server |
+|:---|:---|:---|:---|
+| **1. Upload `.tpk` Basemap** | `suso_bundle$tpk_zip_path` (`suso_ea01_tpk.zip`) | `suso_mapupload(workspace, path_to_zip)` | Uploads & validates the `.tpk` pyramid via GraphQL (`suso_gql_uploadmap`). |
+| **2. Upload `.shp` Overlay** | `suso_bundle$shapefile_zip_path` (`suso_ea01_shapes.zip`) | `suso_mapupload(workspace, path_to_zip)` | Uploads Enumeration Area polygons & labeled points to HQ Maps. |
+| **3. Assign Maps to Interviewers** | `"suso_ea01.tpk"`, `"suso_ea01_grid.shp"` | `suso_mapassign(workspace, fileName, userName)` | Links the offline basemap and vector boundaries to the interviewer's tablet sync queue. |
+| **4. Create Preloaded Assignments** | `capi_pts` (`sample_id`, `cell_id`, `plus_code`, `imagery_acq_date`) | `suso_createASS(df, questID, version)` | Creates preloaded assignments in parallel (`httr2::req_perform_parallel()`). |
+
+```{r, eval = FALSE}
+# Install SurveySolutionsAPIv2 from GitHub if not already installed:
+# remotes::install_github("michael-cw/SurveySolutionsAPIv2")
+library(SurveySolutionsAPIv2)
+library(data.table)
+
+# 1. Authenticate with Survey Solutions Headquarters
+suso_set_key(
+  suso_server = "https://your-suso-server.mysurvey.solutions",
+  suso_user    = Sys.getenv("SUSO_API_USER"),
+  suso_password   = Sys.getenv("SUSO_API_PASS")
+)
+
+ws <- "primary"
+
+# 2. Upload the Vantor .tpk basemap and Enumeration Area Shapefiles to HQ
+suso_mapupload(
+  workspace   = ws,
+  path_to_zip = suso_bundle$tpk_zip_path
+)
+
+suso_mapupload(
+  workspace   = ws,
+  path_to_zip = suso_bundle$shapefile_zip_path
+)
+
+# Verify the uploaded maps and scales on the server
+suso_mapinfo(workspace = ws)
+
+# 3. Assign the .tpk basemap and EA grid boundary overlay to field interviewers
+# (Assuming these interviewers are created on the server already)
+
+for (int_user in c("interviewer01", "interviewer02")) {
+  suso_mapassign(
+    workspace  = ws,
+    fileName   = "suso_ea01.tpk",
+    userName   = int_user,
+    assignUser = TRUE
+  )
+  suso_mapassign(
+    workspace  = ws,
+    fileName   = "suso_ea01_grid.shp",
+    userName   = int_user,
+    assignUser = TRUE
+  )
+}
+
+# 4. Create preloaded assignments via REST API v1 (suso_createASS)
+# (Assuming this questionnaire has the required ID fields and is loaded)
+preload_dt <- data.frame(
+  sample_id         = capi_pts$sample_id,
+  cell_id           = capi_pts$cell_id,
+  plus_code         = capi_pts$plus_code,
+  ResponsibleName   = rep("interviewer01", nrow(capi_pts)),
+  Quantity          = rep(1L, nrow(capi_pts))
+)
+
+suso_createASS(
+  df        = preload_dt,
+  workspace = ws,
+  questID   = "00000000-0000-0000-0000-000000000000",
+  version   = 1L
+)
+```
+
+When `interviewer_01` taps **Synchronize** on their Android tablet:
+1. Survey Solutions downloads `suso_ea01.tpk` and `suso_ea01_grid.shp` into the tablet's offline Map Dashboard.
+2. Each household assignment appears with its preloaded `plus_code` (for offline turn-by-turn routing in Google Maps / OsmAnd), and `cell_id` (`A1`, `B2`).
+
+```{r, include = FALSE}
+if (exists("out_tpk")) unlink(c(out_tpk, attr(tpk_res, "suso_zip_path")))
+if (exists("suso_bundle")) unlink(suso_bundle$output_dir, recursive = TRUE)
+unlink(c(suso_tab_file, usermaps_tab))
+```
