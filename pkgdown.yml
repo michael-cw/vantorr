@@ -2,8 +2,10 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
+  fieldwork-survey-resources: fieldwork-survey-resources.html
   shiny-leaflet-integration: shiny-leaflet-integration.html
-last_built: 2026-10-15T14:32Z
+  survey-solutions-workflow: survey-solutions-workflow.html
+last_built: 2026-10-16T17:50Z
 urls:
   reference: https://michael-cw.github.io/vantorr/reference
   article: https://michael-cw.github.io/vantorr/articles

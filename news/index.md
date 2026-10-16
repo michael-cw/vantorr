@@ -1,5 +1,71 @@
 # Changelog
 
+## vantorr 0.3.0
+
+- Production of Fieldwork Resources for Survey Data Collection
+  (`vantor_fieldwork.R`):
+  - **Survey Index Grids & Enumeration Area Partitioning**:
+    - Added
+      [`vantor_survey_grid()`](https://michael-cw.github.io/vantorr/reference/vantor_survey_grid.md)
+      to partition an Area of Interest into square or hexagonal
+      enumeration cells with alphanumeric spreadsheet labels (`"A1"`,
+      `"A2"`, `"B1"`, …), WGS84 centroids, and planar area (`area_m2`).
+  - **Imagery Vintage & Quality Auditing**:
+    - Added
+      [`vantor_vintage_report()`](https://michael-cw.github.io/vantorr/reference/vantor_vintage_report.md)
+      to intersect Enumeration Areas or survey grids with OGC WFS
+      seamlines
+      ([`vantor_get_seamlines()`](https://michael-cw.github.io/vantorr/reference/vantor_get_seamlines.md)),
+      computing `earliest_acq_date`, `latest_acq_date`, `max_age_days`,
+      `min_gsd_m`, `max_gsd_m`, `max_ona_deg`, contributing `sensors`,
+      and flagging outdated cells via `vintage_warning`.
+  - **CAPI Preload Export & Offline Plus Codes**:
+    - Added
+      [`vantor_plus_code()`](https://michael-cw.github.io/vantorr/reference/vantor_plus_code.md)
+      to encode WGS84 coordinates into 8-, 10-, or 11-character Open
+      Location Codes (Google Plus Codes) in pure R for offline
+      navigation.
+    - Added
+      [`vantor_export_capi()`](https://michael-cw.github.io/vantorr/reference/vantor_export_capi.md)
+      to enrich sample points/polygons with `odk_geopoint` strings,
+      `plus_code`, `google_maps_url`, grid `cell_id`, and imagery
+      vintage metadata, with optional CSV/GeoJSON export (`output_csv`,
+      `output_geojson`) for ODK Collect, KoboToolbox, and ArcGIS
+      Survey123, plus native tab-delimited `.tab` assignment preload
+      export (`output_suso_tab`, `suso_gps_var`) for World Bank Survey
+      Solutions.
+  - **Printable Field Atlases, Esri Tile Packages (`.tpk` / `.tpkx`) &
+    Offline Mobile Bundles**:
+    - Added
+      [`vantor_field_atlas()`](https://michael-cw.github.io/vantorr/reference/vantor_field_atlas.md)
+      to generate multi-page printable PDF Field Atlases (Overview Index
+      sheet + per-cell Detail Enumeration Sheets with scale bars, north
+      arrows, optional Vantor RGB satellite imagery, and enumerator
+      sign-off footers).
+    - Added
+      [`vantor_write_tpk()`](https://michael-cw.github.io/vantorr/reference/vantor_write_tpk.md)
+      to generate multi-zoom Web Mercator (`EPSG:3857` / `WKID: 102100`)
+      Esri Tile Packages in pure R—supporting both classic `.tpk`
+      (Compact Cache V1) and the Apache-2.0 open specification `.tpkx`
+      (Compact Cache V2), plus clean `<stem>_tpk.zip` upload archives
+      (`zip_for_suso = TRUE`)—for zoomable offline basemaps in World
+      Bank Survey Solutions, ArcGIS Field Maps, and Survey123.
+    - Added
+      [`vantor_offline_package()`](https://michael-cw.github.io/vantorr/reference/vantor_offline_package.md)
+      to bundle multi-layer OGC GeoPackages (`.gpkg`), CAPI preload CSVs
+      and Survey Solutions `.tab` files, Web Mercator (`EPSG:3857`)
+      GeoTIFF basemaps, optional `.tpk`/`.tpkx` tile pyramids
+      (`create_tpk`), and zipped Esri Shapefiles
+      (`create_shapefiles = TRUE`) into a portable directory for Survey
+      Solutions, QField, Mergin Maps, and ArcGIS Field Maps.
+  - **Documentation**:
+    - Added vignettes
+      `"Producing Fieldwork Resources for Survey Data Collection"`
+      (`vignettes/fieldwork-survey-resources.Rmd`) and
+      `"Creating Spatial Resources for World Bank Survey Solutions Fieldwork"`
+      (`vignettes/survey-solutions-workflow.Rmd`, including automated
+      server deployment with `SurveySolutionsAPIv2`).
+
 ## vantorr 0.2.0
 
 - R Shiny Modules, Interactive `leaflet` Mapping, WFS Seamlines, Usage

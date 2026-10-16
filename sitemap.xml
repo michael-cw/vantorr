@@ -3,8 +3,10 @@
 <url><loc>https://michael-cw.github.io/vantorr/CODE_OF_CONDUCT.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/LICENSE-text.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/LICENSE.html</loc></url>
+<url><loc>https://michael-cw.github.io/vantorr/articles/fieldwork-survey-resources.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/articles/index.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/articles/shiny-leaflet-integration.html</loc></url>
+<url><loc>https://michael-cw.github.io/vantorr/articles/survey-solutions-workflow.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/authors.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/index.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/news/index.html</loc></url>
@@ -26,9 +28,16 @@
 <url><loc>https://michael-cw.github.io/vantorr/reference/vantor_auth_ui.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/reference/vantor_explorer_server.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/reference/vantor_explorer_ui.html</loc></url>
+<url><loc>https://michael-cw.github.io/vantorr/reference/vantor_export_capi.html</loc></url>
+<url><loc>https://michael-cw.github.io/vantorr/reference/vantor_field_atlas.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/reference/vantor_get_seamlines.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/reference/vantor_get_usage.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/reference/vantor_has_auth.html</loc></url>
+<url><loc>https://michael-cw.github.io/vantorr/reference/vantor_offline_package.html</loc></url>
+<url><loc>https://michael-cw.github.io/vantorr/reference/vantor_plus_code.html</loc></url>
+<url><loc>https://michael-cw.github.io/vantorr/reference/vantor_survey_grid.html</loc></url>
+<url><loc>https://michael-cw.github.io/vantorr/reference/vantor_vintage_report.html</loc></url>
 <url><loc>https://michael-cw.github.io/vantorr/reference/vantor_wmts_url.html</loc></url>
+<url><loc>https://michael-cw.github.io/vantorr/reference/vantor_write_tpk.html</loc></url>
 </urlset>
 

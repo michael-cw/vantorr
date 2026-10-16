@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">vantorr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,6 +19,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/shiny-leaflet-integration.html">Interactive Leaflet Maps and Shiny Apps</a></li>
+    <li><a class="dropdown-item" href="../articles/fieldwork-survey-resources.html">Producing Fieldwork Resources for Survey Data Collection</a></li>
+    <li><a class="dropdown-item" href="../articles/survey-solutions-workflow.html">Creating Spatial Resources for Survey Solutions Fieldwork</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -36,6 +38,34 @@
       <small>Source: <a href="https://github.com/michael-cw/vantorr/blob/dev/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="vantorr-030">vantorr 0.3.0<a class="anchor" aria-label="anchor" href="#vantorr-030"></a></h2>
+<ul><li>Production of Fieldwork Resources for Survey Data Collection (<code>vantor_fieldwork.R</code>):
+<ul><li>
+<strong>Survey Index Grids &amp; Enumeration Area Partitioning</strong>:
+<ul><li>Added <code><a href="../reference/vantor_survey_grid.html">vantor_survey_grid()</a></code> to partition an Area of Interest into square or hexagonal enumeration cells with alphanumeric spreadsheet labels (<code>"A1"</code>, <code>"A2"</code>, <code>"B1"</code>, …), WGS84 centroids, and planar area (<code>area_m2</code>).</li>
+</ul></li>
+<li>
+<strong>Imagery Vintage &amp; Quality Auditing</strong>:
+<ul><li>Added <code><a href="../reference/vantor_vintage_report.html">vantor_vintage_report()</a></code> to intersect Enumeration Areas or survey grids with OGC WFS seamlines (<code><a href="../reference/vantor_get_seamlines.html">vantor_get_seamlines()</a></code>), computing <code>earliest_acq_date</code>, <code>latest_acq_date</code>, <code>max_age_days</code>, <code>min_gsd_m</code>, <code>max_gsd_m</code>, <code>max_ona_deg</code>, contributing <code>sensors</code>, and flagging outdated cells via <code>vintage_warning</code>.</li>
+</ul></li>
+<li>
+<strong>CAPI Preload Export &amp; Offline Plus Codes</strong>:
+<ul><li>Added <code><a href="../reference/vantor_plus_code.html">vantor_plus_code()</a></code> to encode WGS84 coordinates into 8-, 10-, or 11-character Open Location Codes (Google Plus Codes) in pure R for offline navigation.</li>
+<li>Added <code><a href="../reference/vantor_export_capi.html">vantor_export_capi()</a></code> to enrich sample points/polygons with <code>odk_geopoint</code> strings, <code>plus_code</code>, <code>google_maps_url</code>, grid <code>cell_id</code>, and imagery vintage metadata, with optional CSV/GeoJSON export (<code>output_csv</code>, <code>output_geojson</code>) for ODK Collect, KoboToolbox, and ArcGIS Survey123, plus native tab-delimited <code>.tab</code> assignment preload export (<code>output_suso_tab</code>, <code>suso_gps_var</code>) for World Bank Survey Solutions.</li>
+</ul></li>
+<li>
+<strong>Printable Field Atlases, Esri Tile Packages (<code>.tpk</code> / <code>.tpkx</code>) &amp; Offline Mobile Bundles</strong>:
+<ul><li>Added <code><a href="../reference/vantor_field_atlas.html">vantor_field_atlas()</a></code> to generate multi-page printable PDF Field Atlases (Overview Index sheet + per-cell Detail Enumeration Sheets with scale bars, north arrows, optional Vantor RGB satellite imagery, and enumerator sign-off footers).</li>
+<li>Added <code><a href="../reference/vantor_write_tpk.html">vantor_write_tpk()</a></code> to generate multi-zoom Web Mercator (<code>EPSG:3857</code> / <code>WKID: 102100</code>) Esri Tile Packages in pure R—supporting both classic <code>.tpk</code> (Compact Cache V1) and the Apache-2.0 open specification <code>.tpkx</code> (Compact Cache V2), plus clean <code>&lt;stem&gt;_tpk.zip</code> upload archives (<code>zip_for_suso = TRUE</code>)—for zoomable offline basemaps in World Bank Survey Solutions, ArcGIS Field Maps, and Survey123.</li>
+<li>Added <code><a href="../reference/vantor_offline_package.html">vantor_offline_package()</a></code> to bundle multi-layer OGC GeoPackages (<code>.gpkg</code>), CAPI preload CSVs and Survey Solutions <code>.tab</code> files, Web Mercator (<code>EPSG:3857</code>) GeoTIFF basemaps, optional <code>.tpk</code>/<code>.tpkx</code> tile pyramids (<code>create_tpk</code>), and zipped Esri Shapefiles (<code>create_shapefiles = TRUE</code>) into a portable directory for Survey Solutions, QField, Mergin Maps, and ArcGIS Field Maps.</li>
+</ul></li>
+<li>
+<strong>Documentation</strong>:
+<ul><li>Added vignettes <code>"Producing Fieldwork Resources for Survey Data Collection"</code> (<code>vignettes/fieldwork-survey-resources.Rmd</code>) and <code>"Creating Spatial Resources for World Bank Survey Solutions Fieldwork"</code> (<code>vignettes/survey-solutions-workflow.Rmd</code>, including automated server deployment with <code>SurveySolutionsAPIv2</code>).</li>
+</ul></li>
+</ul></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="vantorr-020">vantorr 0.2.0<a class="anchor" aria-label="anchor" href="#vantorr-020"></a></h2>
 <ul><li>R Shiny Modules, Interactive <code>leaflet</code> Mapping, WFS Seamlines, Usage API &amp; Companion Website:

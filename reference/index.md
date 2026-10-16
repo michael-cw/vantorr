@@ -36,6 +36,38 @@ vector seamline polygons with acquisition metadata.
 
   Get Vantor Basemap Seamlines as an `sf` Object (OGC WFS)
 
+## Fieldwork & Survey Data Collection Resources
+
+Generate alphanumeric survey index grids, audit imagery vintage across
+Enumeration Areas, encode offline Plus Codes, export CAPI preload files
+(ODK, Kobo, Survey123), print multi-page PDF Field Atlases, and bundle
+offline GeoPackages and Esri Tile Packages (.tpk / .tpkx) for Survey
+Solutions and ArcGIS Field Maps.
+
+- [`vantor_survey_grid()`](https://michael-cw.github.io/vantorr/reference/vantor_survey_grid.md)
+  : Generate an Alphanumeric Survey Index Grid over an Area of Interest
+
+- [`vantor_vintage_report()`](https://michael-cw.github.io/vantorr/reference/vantor_vintage_report.md)
+  : Audit Basemap Imagery Vintage and Sensor Quality Across Survey Areas
+
+- [`vantor_plus_code()`](https://michael-cw.github.io/vantorr/reference/vantor_plus_code.md)
+  : Encode Coordinates as Open Location Codes (Google Plus Codes)
+
+- [`vantor_export_capi()`](https://michael-cw.github.io/vantorr/reference/vantor_export_capi.md)
+  : Prepare and Export Survey Sample Points for CAPI Fieldwork Apps
+
+- [`vantor_field_atlas()`](https://michael-cw.github.io/vantorr/reference/vantor_field_atlas.md)
+  : Generate a Printable Multi-Page Field Atlas (PDF Map Book)
+
+- [`vantor_offline_package()`](https://michael-cw.github.io/vantorr/reference/vantor_offline_package.md)
+  : Package Offline Fieldwork Vector Layers and Satellite Basemaps
+
+- [`vantor_write_tpk()`](https://michael-cw.github.io/vantorr/reference/vantor_write_tpk.md)
+  :
+
+  Write an Esri Tile Package (`.tpk` or `.tpkx`) for Offline Field
+  Basemaps
+
 ## Interactive Mapping (leaflet)
 
 Stream Vantor Vivid mosaics, seamline overlays, and archive strips

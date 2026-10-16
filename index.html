@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">vantorr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,8 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/shiny-leaflet-integration.html">Interactive Leaflet Maps and Shiny Apps</a></li>
+    <li><a class="dropdown-item" href="articles/fieldwork-survey-resources.html">Producing Fieldwork Resources for Survey Data Collection</a></li>
+    <li><a class="dropdown-item" href="articles/survey-solutions-workflow.html">Creating Spatial Resources for Survey Solutions Fieldwork</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -72,6 +74,8 @@
 <strong>Basemaps, Tiling &amp; Seamline Metadata</strong>: Download Vivid 30 cm / 15 cm GeoTIFFs (<code><a href="reference/get_maxar_wms_basemap.html">get_maxar_wms_basemap()</a></code>), automatically tile and mosaic large areas (<code><a href="reference/get_maxar_wms_tiles.html">get_maxar_wms_tiles()</a></code>), and retrieve vector seamline polygons with acquisition dates and sensor metadata via OGC WFS (<code><a href="reference/vantor_get_seamlines.html">vantor_get_seamlines()</a></code>).</li>
 <li>
 <strong>Account Quota Monitoring</strong>: Query credit limits and consumption breakdowns via the Usage API v2 (<code><a href="reference/vantor_get_usage.html">vantor_get_usage()</a></code>).</li>
+<li>
+<strong>Survey Fieldwork Resource Generation</strong>: Create alphanumeric survey index grids (<code><a href="reference/vantor_survey_grid.html">vantor_survey_grid()</a></code>), audit imagery vintage across Enumeration Areas (<code><a href="reference/vantor_vintage_report.html">vantor_vintage_report()</a></code>), encode offline Google Plus Codes (<code><a href="reference/vantor_plus_code.html">vantor_plus_code()</a></code>), export CAPI preload tables (<code><a href="reference/vantor_export_capi.html">vantor_export_capi()</a></code>), generate multi-page printable PDF Field Atlases (<code><a href="reference/vantor_field_atlas.html">vantor_field_atlas()</a></code>), and bundle offline GeoPackages (<code><a href="reference/vantor_offline_package.html">vantor_offline_package()</a></code>).</li>
 <li>
 <strong>Interactive <code>leaflet</code> &amp; <code>shiny</code> Integration</strong>: Stream WMTS/WMS basemaps, seamlines, and archive strips in <code>leaflet</code> (<code><a href="reference/add_vantor_basemap.html">add_vantor_basemap()</a></code>, <code><a href="reference/add_vantor_seamlines.html">add_vantor_seamlines()</a></code>, <code><a href="reference/add_vantor_imagery.html">add_vantor_imagery()</a></code>), or embed drop-in Shiny modules (<code><a href="reference/vantor_auth_ui.html">vantor_auth_ui()</a></code>, <code><a href="reference/vantor_explorer_ui.html">vantor_explorer_ui()</a></code>, <code><a href="reference/run_vantor_demo_app.html">run_vantor_demo_app()</a></code>).</li>
 </ul>
@@ -148,10 +152,29 @@
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="fieldwork-resources-for-survey-data-collection">Fieldwork Resources for Survey Data Collection<a class="anchor" aria-label="anchor" href="#fieldwork-resources-for-survey-data-collection"></a>
+</h2>
+<p>Generate alphanumeric survey index grids, audit imagery vintage across Enumeration Areas, prepare CAPI sample preload tables (with offline Google Plus Codes and ODK <code>geopoint</code> strings), print multi-page PDF Field Atlases, and export offline Esri Tile Packages (<code>.tpk</code> / <code>.tpkx</code>) for <strong>World Bank Survey Solutions</strong> and <strong>ArcGIS Field Maps</strong>:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># 1. Create a 500 m alphanumeric survey grid (A1, A2, B1, ...)</span></span>
+<span><span class="va">grid_sf</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/vantor_survey_grid.html">vantor_survey_grid</a></span><span class="op">(</span><span class="va">aoi</span>, cell_size <span class="op">=</span> <span class="fl">500</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 2. Audit imagery acquisition dates and flag outdated cells (&gt; 2 years old)</span></span>
+<span><span class="va">vintage_grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/vantor_vintage_report.html">vantor_vintage_report</a></span><span class="op">(</span><span class="va">grid_sf</span>, seamlines <span class="op">=</span> <span class="va">seamlines_sf</span>, max_age_days <span class="op">=</span> <span class="fl">730</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 3. Export CAPI preload table (with Plus Codes &amp; ODK geopoints) and multi-page PDF Atlas</span></span>
+<span><span class="va">capi_pts</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/vantor_export_capi.html">vantor_export_capi</a></span><span class="op">(</span><span class="va">sample_pts</span>, grid <span class="op">=</span> <span class="va">vintage_grid</span>, seamlines <span class="op">=</span> <span class="va">seamlines_sf</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/vantor_field_atlas.html">vantor_field_atlas</a></span><span class="op">(</span><span class="va">vintage_grid</span>, points <span class="op">=</span> <span class="va">capi_pts</span>, raster <span class="op">=</span> <span class="va">basemap_rast</span>, output_file <span class="op">=</span> <span class="st">"field_atlas.pdf"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># 4. Write a zoomable Esri Tile Package (.tpk or .tpkx) for Survey Solutions</span></span>
+<span><span class="fu"><a href="reference/vantor_write_tpk.html">vantor_write_tpk</a></span><span class="op">(</span>raster <span class="op">=</span> <span class="va">basemap_rast</span>, output_file <span class="op">=</span> <span class="st">"ea_basemap.tpk"</span>, zoom <span class="op">=</span> <span class="fl">15</span><span class="op">:</span><span class="fl">18</span><span class="op">)</span></span></code></pre></div>
+<p>See <code><a href="articles/fieldwork-survey-resources.html">vignette("fieldwork-survey-resources", package = "vantorr")</a></code> for the complete fieldwork workflow.</p>
+</div>
+<div class="section level2">
 <h2 id="interactive-leaflet-maps--r-shiny-modules">Interactive <code>leaflet</code> Maps &amp; R Shiny Modules<a class="anchor" aria-label="anchor" href="#interactive-leaflet-maps--r-shiny-modules"></a>
 </h2>
 <p>Stream Vantor Vivid mosaics (<code>WMTS</code> or <code>WMS</code>), seamline cutlines (<code>mode = "wms"</code> or interactive <code>mode = "wfs"</code> polygons), and archive strips directly into <code>leaflet</code> maps, or embed the pre-built Shiny modules (<code><a href="reference/vantor_auth_ui.html">vantor_auth_ui()</a></code> and <code><a href="reference/vantor_explorer_ui.html">vantor_explorer_ui()</a></code>):</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://rstudio.github.io/leaflet/" class="external-link">leaflet</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/michael-cw/vantorr" class="external-link">vantorr</a></span><span class="op">)</span></span>
 <span></span>
@@ -168,7 +191,7 @@
 <span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="reference/run_vantor_demo_app.html">run_vantor_demo_app</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">}</span></span></code></pre></div>
-<p>See <code><a href="articles/shiny-leaflet-integration.html">vignette("shiny-leaflet-integration", package = "vantorr")</a></code> or visit the <a href="https://michael-cw.github.io/vantorr/">companion website</a> for a complete guide to building custom <code>leaflet</code> + <code>shiny</code> applications.</p>
+<p>See <code><a href="articles/shiny-leaflet-integration.html">vignette("shiny-leaflet-integration", package = "vantorr")</a></code> or visit the <a href="https://michael-cw.github.io/vantorr/">companion website</a> for full documentation.</p>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>

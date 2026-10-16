@@ -29,6 +29,19 @@ with `sf`, `terra`, `stars`, `leaflet`, and `shiny`.
 - **Account Quota Monitoring**: Query credit limits and consumption
   breakdowns via the Usage API v2
   ([`vantor_get_usage()`](https://michael-cw.github.io/vantorr/reference/vantor_get_usage.md)).
+- **Survey Fieldwork Resource Generation**: Create alphanumeric survey
+  index grids
+  ([`vantor_survey_grid()`](https://michael-cw.github.io/vantorr/reference/vantor_survey_grid.md)),
+  audit imagery vintage across Enumeration Areas
+  ([`vantor_vintage_report()`](https://michael-cw.github.io/vantorr/reference/vantor_vintage_report.md)),
+  encode offline Google Plus Codes
+  ([`vantor_plus_code()`](https://michael-cw.github.io/vantorr/reference/vantor_plus_code.md)),
+  export CAPI preload tables
+  ([`vantor_export_capi()`](https://michael-cw.github.io/vantorr/reference/vantor_export_capi.md)),
+  generate multi-page printable PDF Field Atlases
+  ([`vantor_field_atlas()`](https://michael-cw.github.io/vantorr/reference/vantor_field_atlas.md)),
+  and bundle offline GeoPackages
+  ([`vantor_offline_package()`](https://michael-cw.github.io/vantorr/reference/vantor_offline_package.md)).
 - **Interactive `leaflet` & `shiny` Integration**: Stream WMTS/WMS
   basemaps, seamlines, and archive strips in `leaflet`
   ([`add_vantor_basemap()`](https://michael-cw.github.io/vantorr/reference/add_vantor_basemap.md),
@@ -140,6 +153,34 @@ large_mosaic <- get_maxar_wms_tiles(
 )
 ```
 
+## Fieldwork Resources for Survey Data Collection
+
+Generate alphanumeric survey index grids, audit imagery vintage across
+Enumeration Areas, prepare CAPI sample preload tables (with offline
+Google Plus Codes and ODK `geopoint` strings), print multi-page PDF
+Field Atlases, and export offline Esri Tile Packages (`.tpk` / `.tpkx`)
+for **World Bank Survey Solutions** and **ArcGIS Field Maps**:
+
+``` r
+
+# 1. Create a 500 m alphanumeric survey grid (A1, A2, B1, ...)
+grid_sf <- vantor_survey_grid(aoi, cell_size = 500)
+
+# 2. Audit imagery acquisition dates and flag outdated cells (> 2 years old)
+vintage_grid <- vantor_vintage_report(grid_sf, seamlines = seamlines_sf, max_age_days = 730)
+
+# 3. Export CAPI preload table (with Plus Codes & ODK geopoints) and multi-page PDF Atlas
+capi_pts <- vantor_export_capi(sample_pts, grid = vintage_grid, seamlines = seamlines_sf)
+vantor_field_atlas(vintage_grid, points = capi_pts, raster = basemap_rast, output_file = "field_atlas.pdf")
+
+# 4. Write a zoomable Esri Tile Package (.tpk or .tpkx) for Survey Solutions
+vantor_write_tpk(raster = basemap_rast, output_file = "ea_basemap.tpk", zoom = 15:18)
+```
+
+See
+[`vignette("fieldwork-survey-resources", package = "vantorr")`](https://michael-cw.github.io/vantorr/articles/fieldwork-survey-resources.md)
+for the complete fieldwork workflow.
+
 ## Interactive `leaflet` Maps & R Shiny Modules
 
 Stream Vantor Vivid mosaics (`WMTS` or `WMS`), seamline cutlines
@@ -173,8 +214,7 @@ if (interactive()) {
 See
 [`vignette("shiny-leaflet-integration", package = "vantorr")`](https://michael-cw.github.io/vantorr/articles/shiny-leaflet-integration.md)
 or visit the [companion website](https://michael-cw.github.io/vantorr/)
-for a complete guide to building custom `leaflet` + `shiny`
-applications.
+for full documentation.
 
 ## License
 
