@@ -303,7 +303,7 @@ read.delim(suso_tab_file, check.names = FALSE)[, c(
 ```
 
 Enumerators can type the preloaded `plus_code` (e.g., `85FPPXQR+JR`)
-from the interview cover page directly into Google Maps or OsmAnd on a
+from the interview cover page directly into Google Maps or OSM on a
 mobile tablet to get turn-by-turn routing to the sampled structure
 **completely offline**, then switch to the offline Vantor `.tpk` basemap
 for the final 100 meters.

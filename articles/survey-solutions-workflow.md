@@ -20,22 +20,9 @@ packaging conventions:
 | **Vector Boundary / Point Overlay** | `.shp`, `.shx`, `.dbf`, `.prj` inside a flat `.zip` (`<name>_shapes.zip`) | Geographic `WGS 84` (`EPSG:4326`) | Mandatory `.shp`, `.shx`, `.dbf` at the archive root; an optional `label` attribute column is rendered automatically as feature labels on the tablet map. |
 | **Assignment Preload Table** | Tab-delimited `.tab` (`<name>_suso_preload.tab`) | Geographic `WGS 84` (`EPSG:4326`) | Composite `<gps_var>__Latitude` & `<gps_var>__Longitude` columns for **Map Dashboard** household pins, `_target_area` (from `cell_id`), `plus_code` for offline cover-page routing, and `imagery_acq_date`. |
 
-### Why Standard macOS `.zip` Archives Fail on Survey Solutions HQ
+### Create .zip archive for upload
 
-When users compress a `.tpk` or `.shp` file using macOS Finder
-(*Right-click $`\rightarrow`$ Compress*), macOS injects hidden
-AppleDouble resource fork entries (`__MACOSX/._filename.tpk`). Survey
-Solutions Headquarters validates every entry in the uploaded `.zip`
-archive via `MapFilesValidator.CheckFileNamesOnInvalidChars` and rejects
-the upload with:
-
-> `The file __MACOSX/._<filename>.tpk name includes invalid characters.`
-
-Additionally, if files are zipped inside a subfolder rather than at the
-root of the `.zip` archive, Survey Solutions HQ cannot locate the map
-files during extraction.
-
-`vantorr` handles all of these requirements automatically in pure
+`vantorr` handles all of the upload-requirements automatically in pure
 R—without requiring ArcGIS Pro, ArcMap, or ArcGIS Online credits—using
 [`vantor_write_tpk()`](https://michael-cw.github.io/vantorr/reference/vantor_write_tpk.md),
 [`vantor_export_capi()`](https://michael-cw.github.io/vantorr/reference/vantor_export_capi.md),
@@ -49,11 +36,8 @@ package for programmatic server uploads and assignment creation.
 
 ## 1. Delineating Enumeration Areas, Sample Points & `.tab` Assignment Preloads
 
-Unlike ODK Collect or KoboToolbox (which preload CSV/GeoJSON files with
-a single space-separated `odk_geopoint` string), **Survey Solutions
-Headquarters** (`Survey Setup -> Questionnaires -> Upload Assignments`)
-requires **tab-delimited (`.tab`)** preload files with specific column
-naming conventions:
+**Survey Solutions Headquarters** requires **tab-delimited (`.tab`)**
+preload files with specific column naming conventions:
 
 - **`<gps_var>__Latitude` and `<gps_var>__Longitude`**: To display
   sampled households as interactive pins on the Interviewer tablet’s
@@ -71,14 +55,16 @@ naming conventions:
   questions on the questionnaire cover page. Because `.tpk` satellite
   basemaps do not perform turn-by-turn road routing, enumerators can
   copy the 11-character Open Location Code (`plus_code`) from the cover
-  page into Google Maps or OsmAnd to get offline turn-by-turn
-  driving/walking directions to within 3 meters of the dwelling, then
-  switch back to the Survey Solutions Map Dashboard and `.tpk` basemap
-  for the final approach. Meanwhile, `imagery_acq_date` tells the
-  enumerator when the Vantor satellite image was captured so they can
-  distinguish newly constructed buildings from older structures.
+  page into Google Maps or OSM to get offline turn-by-turn
+  driving/walking directions to within 3 meters of the dwelling in case
+  they are not using preloaded GPS coordinates, then switch back to the
+  Survey Solutions Map Dashboard and `.tpk` basemap for the final
+  approach. Meanwhile, `imagery_acq_date` tells the enumerator when the
+  Vantor satellite image was captured so they can distinguish newly
+  constructed buildings from older structures, which may be useful in
+  household enumeration operations.
 
-Setting `output_suso_tab` and `suso_gps_var = "hh_gps"` in
+Specifying `output_suso_tab` and `suso_gps_var = "hh_gps"` in
 [`vantor_export_capi()`](https://michael-cw.github.io/vantorr/reference/vantor_export_capi.md)
 generates this exact `.tab` file automatically:
 
@@ -466,4 +452,4 @@ When `interviewer_01` taps **Synchronize** on their Android tablet: 1.
 Survey Solutions downloads `suso_ea01.tpk` and `suso_ea01_grid.shp` into
 the tablet’s offline Map Dashboard. 2. Each household assignment appears
 with its preloaded `plus_code` (for offline turn-by-turn routing in
-Google Maps / OsmAnd), and `cell_id` (`A1`, `B2`).
+Google Maps / OSM), and `cell_id` (`A1`, `B2`).

@@ -61,7 +61,7 @@
       <h1>Creating Spatial Resources for World Bank Survey Solutions Fieldwork</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/michael-cw/vantorr/blob/dev/vignettes/survey-solutions-workflow.Rmd" class="external-link"><code>vignettes/survey-solutions-workflow.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/michael-cw/vantorr/blob/main/vignettes/survey-solutions-workflow.Rmd" class="external-link"><code>vignettes/survey-solutions-workflow.Rmd</code></a></small>
       <div class="d-none name"><code>survey-solutions-workflow.Rmd</code></div>
     </div>
 
@@ -145,26 +145,11 @@ routing, and <code>imagery_acq_date</code>.</td>
 </tbody>
 </table>
 <div class="section level3">
-<h3 id="why-standard-macos--zip-archives-fail-on-survey-solutions-hq">Why Standard macOS <code>.zip</code> Archives Fail on Survey
-Solutions HQ<a class="anchor" aria-label="anchor" href="#why-standard-macos--zip-archives-fail-on-survey-solutions-hq"></a>
+<h3 id="create--zip-archive-for-upload">Create .zip archive for upload<a class="anchor" aria-label="anchor" href="#create--zip-archive-for-upload"></a>
 </h3>
-<p>When users compress a <code>.tpk</code> or <code>.shp</code> file
-using macOS Finder (<em>Right-click
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>→</mo><annotation encoding="application/x-tex">\rightarrow</annotation></semantics></math>
-Compress</em>), macOS injects hidden AppleDouble resource fork entries
-(<code>__MACOSX/._filename.tpk</code>). Survey Solutions Headquarters
-validates every entry in the uploaded <code>.zip</code> archive via
-<code>MapFilesValidator.CheckFileNamesOnInvalidChars</code> and rejects
-the upload with:</p>
-<blockquote>
-<p><code>The file __MACOSX/._&lt;filename&gt;.tpk name includes invalid characters.</code></p>
-</blockquote>
-<p>Additionally, if files are zipped inside a subfolder rather than at
-the root of the <code>.zip</code> archive, Survey Solutions HQ cannot
-locate the map files during extraction.</p>
-<p><code>vantorr</code> handles all of these requirements automatically
-in pure R—without requiring ArcGIS Pro, ArcMap, or ArcGIS Online
-credits—using <code><a href="../reference/vantor_write_tpk.html">vantor_write_tpk()</a></code>,
+<p><code>vantorr</code> handles all of the upload-requirements
+automatically in pure R—without requiring ArcGIS Pro, ArcMap, or ArcGIS
+Online credits—using <code><a href="../reference/vantor_write_tpk.html">vantor_write_tpk()</a></code>,
 <code><a href="../reference/vantor_export_capi.html">vantor_export_capi()</a></code>, and
 <code><a href="../reference/vantor_offline_package.html">vantor_offline_package()</a></code>, and integrates directly with the
 <a href="https://github.com/michael-cw/SurveySolutionsAPIv2" class="external-link"><strong><code>SurveySolutionsAPIv2</code></strong></a>
@@ -176,12 +161,9 @@ package for programmatic server uploads and assignment creation.</p>
 <h2 id="delineating-enumeration-areas-sample-points--tab-assignment-preloads">1. Delineating Enumeration Areas, Sample Points &amp;
 <code>.tab</code> Assignment Preloads<a class="anchor" aria-label="anchor" href="#delineating-enumeration-areas-sample-points--tab-assignment-preloads"></a>
 </h2>
-<p>Unlike ODK Collect or KoboToolbox (which preload CSV/GeoJSON files
-with a single space-separated <code>odk_geopoint</code> string),
-<strong>Survey Solutions Headquarters</strong>
-(<code>Survey Setup -&gt; Questionnaires -&gt; Upload Assignments</code>)
-requires <strong>tab-delimited (<code>.tab</code>)</strong> preload
-files with specific column naming conventions:</p>
+<p><strong>Survey Solutions Headquarters</strong> requires
+<strong>tab-delimited (<code>.tab</code>)</strong> preload files with
+specific column naming conventions:</p>
 <ul>
 <li>
 <strong><code>&lt;gps_var&gt;__Latitude</code> and
@@ -207,15 +189,17 @@ sector (<code>cell_id</code>, e.g., <code>"A1"</code>,
 <code>Identifying</code> text questions on the questionnaire cover page.
 Because <code>.tpk</code> satellite basemaps do not perform turn-by-turn
 road routing, enumerators can copy the 11-character Open Location Code
-(<code>plus_code</code>) from the cover page into Google Maps or OsmAnd
-to get offline turn-by-turn driving/walking directions to within 3
-meters of the dwelling, then switch back to the Survey Solutions Map
-Dashboard and <code>.tpk</code> basemap for the final approach.
-Meanwhile, <code>imagery_acq_date</code> tells the enumerator when the
-Vantor satellite image was captured so they can distinguish newly
-constructed buildings from older structures.</li>
+(<code>plus_code</code>) from the cover page into Google Maps or OSM to
+get offline turn-by-turn driving/walking directions to within 3 meters
+of the dwelling in case they are not using preloaded GPS coordinates,
+then switch back to the Survey Solutions Map Dashboard and
+<code>.tpk</code> basemap for the final approach. Meanwhile,
+<code>imagery_acq_date</code> tells the enumerator when the Vantor
+satellite image was captured so they can distinguish newly constructed
+buildings from older structures, which may be useful in household
+enumeration operations.</li>
 </ul>
-<p>Setting <code>output_suso_tab</code> and
+<p>Specifying <code>output_suso_tab</code> and
 <code>suso_gps_var = "hh_gps"</code> in
 <code><a href="../reference/vantor_export_capi.html">vantor_export_capi()</a></code> generates this exact <code>.tab</code>
 file automatically:</p>
@@ -694,7 +678,7 @@ their Android tablet: 1. Survey Solutions downloads
 <code>suso_ea01.tpk</code> and <code>suso_ea01_grid.shp</code> into the
 tablet’s offline Map Dashboard. 2. Each household assignment appears
 with its preloaded <code>plus_code</code> (for offline turn-by-turn
-routing in Google Maps / OsmAnd), and <code>cell_id</code>
+routing in Google Maps / OSM), and <code>cell_id</code>
 (<code>A1</code>, <code>B2</code>).</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
