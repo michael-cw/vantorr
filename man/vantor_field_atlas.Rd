@@ -93,5 +93,6 @@ aoi <- sf::st_bbox(
 )
 grid_sf <- vantor_survey_grid(aoi, cell_size = 600, verbose = FALSE)
 pdf_path <- vantor_field_atlas(grid_sf, verbose = FALSE)
+unlink(pdf_path)
 
 }

@@ -16,7 +16,7 @@ add_vantor_basemap(
   cql_filter = NULL,
   shoreline_masking = FALSE,
   max_zoom = 21L,
-  attribution = "Imagery © Vantor / Maxar Technologies",
+  attribution = "Imagery &copy; Vantor / Maxar Technologies",
   options = NULL,
   verbose = getOption("vantorr.verbose", TRUE)
 )
@@ -32,7 +32,7 @@ addVantorBasemap(
   cql_filter = NULL,
   shoreline_masking = FALSE,
   max_zoom = 21L,
-  attribution = "Imagery © Vantor / Maxar Technologies",
+  attribution = "Imagery &copy; Vantor / Maxar Technologies",
   options = NULL,
   verbose = getOption("vantorr.verbose", TRUE)
 )

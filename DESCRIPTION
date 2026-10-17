@@ -3,15 +3,16 @@ Title: Access 'Maxar' and 'Vantor' Satellite Imagery APIs
 Version: 0.3.0
 Authors@R: 
     person("Michael", "Wild", , "mWild@worldbank.org", role = c("aut", "cre"))
-Description: Provides a client for the 'Maxar' and 'Vantor' Hub APIs
-    (<https://developers.maxar.com/docs/>), enabling programmatic access to
-    high-resolution satellite imagery (such as 'WorldView', 'Vivid' basemaps,
-    and analysis-ready data). Includes functions for 'OAuth2' and API key
-    authentication, discovery and 'STAC' catalog search, 'OGC' web services
+Description: Provides a client for the 'Maxar' and 'Vantor' 'REST' and 'OGC'
+    APIs (<https://developers.maxar.com/docs/>), enabling programmatic access
+    to high-resolution satellite imagery (such as 'WorldView', 'Vivid'
+    basemaps, and analysis-ready data). Includes functions for 'OAuth2' and API
+    key authentication, discovery and 'STAC' catalog search, 'OGC' web services
     ('WMS', 'WMTS', 'WFS'), survey fieldwork resource generation (printable
-    field atlases, index grids, 'CAPI' preloads, offline 'GeoPackages'),
-    interactive 'leaflet' and 'Shiny' application modules, and spatial data
-    retrieval integrated with 'sf', 'terra', and 'stars'.
+    field atlases, index grids, 'Survey Solutions' and 'ODK' preloads, offline
+    'GeoPackage' and 'Esri' tile packages), interactive 'leaflet' and 'shiny'
+    application modules, and spatial data retrieval integrated with 'sf',
+    'terra', and 'stars'.
 License: MIT + file LICENSE
 URL: https://github.com/michael-cw/vantorr,
     https://michael-cw.github.io/vantorr/,

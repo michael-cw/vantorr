@@ -15,7 +15,7 @@ add_vantor_imagery(
   format = "image/vnd.jpeg-png",
   transparent = TRUE,
   max_zoom = 21L,
-  attribution = "Imagery © Vantor / Maxar Technologies",
+  attribution = "Imagery &copy; Vantor / Maxar Technologies",
   options = NULL,
   verbose = getOption("vantorr.verbose", TRUE)
 )
@@ -30,7 +30,7 @@ addVantorImagery(
   format = "image/vnd.jpeg-png",
   transparent = TRUE,
   max_zoom = 21L,
-  attribution = "Imagery © Vantor / Maxar Technologies",
+  attribution = "Imagery &copy; Vantor / Maxar Technologies",
   options = NULL,
   verbose = getOption("vantorr.verbose", TRUE)
 )

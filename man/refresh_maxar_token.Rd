@@ -25,8 +25,11 @@ username and password, and updates the session token cache.
 }
 \examples{
 \donttest{
-if (!is.null(vantorr:::.vantorr_env$refresh_token)) {
-  new_token <- refresh_maxar_token(verbose = FALSE)
+if (nzchar(Sys.getenv("VANTOR_USERNAME")) && nzchar(Sys.getenv("VANTOR_PASSWORD"))) {
+  tok <- get_maxar_token(verbose = FALSE)
+  if (!is.null(tok$refresh_token)) {
+    new_token <- refresh_maxar_token(tok$refresh_token, verbose = FALSE)
+  }
 }
 }
 

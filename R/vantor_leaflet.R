@@ -147,7 +147,7 @@ add_vantor_basemap <- function(map,
                                cql_filter = NULL,
                                shoreline_masking = FALSE,
                                max_zoom = 21L,
-                               attribution = "Imagery \u00a9 Vantor / Maxar Technologies",
+                               attribution = "Imagery &copy; Vantor / Maxar Technologies",
                                options = NULL,
                                verbose = getOption("vantorr.verbose", TRUE)) {
 
@@ -323,7 +323,7 @@ add_vantor_seamlines <- function(map,
       layerId = layerId,
       group = group,
       options = options,
-      attribution = "Seamlines \u00a9 Vantor / Maxar Technologies"
+      attribution = "Seamlines &copy; Vantor / Maxar Technologies"
     )
 
     if (verbose) {
@@ -455,7 +455,7 @@ add_vantor_imagery <- function(map,
                                format = "image/vnd.jpeg-png",
                                transparent = TRUE,
                                max_zoom = 21L,
-                               attribution = "Imagery \u00a9 Vantor / Maxar Technologies",
+                               attribution = "Imagery &copy; Vantor / Maxar Technologies",
                                options = NULL,
                                verbose = getOption("vantorr.verbose", TRUE)) {
 

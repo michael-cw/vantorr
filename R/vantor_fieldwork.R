@@ -697,6 +697,7 @@ vantor_export_capi <- function(samples,
 #' )
 #' grid_sf <- vantor_survey_grid(aoi, cell_size = 600, verbose = FALSE)
 #' pdf_path <- vantor_field_atlas(grid_sf, verbose = FALSE)
+#' unlink(pdf_path)
 #'
 #' @export
 vantor_field_atlas <- function(grid,
@@ -984,6 +985,7 @@ vantor_field_atlas <- function(grid,
 #'   create_shapefiles = TRUE,
 #'   verbose = FALSE
 #' )
+#' unlink(bundle$output_dir, recursive = TRUE)
 #'
 #' @export
 vantor_offline_package <- function(output_dir = tempfile(pattern = "vantor_offline_pkg_"),
@@ -1253,6 +1255,7 @@ vantor_offline_package <- function(output_dir = tempfile(pattern = "vantor_offli
 #'     zoom = 14:15,
 #'     verbose = FALSE
 #'   )
+#'   unlink(c(tpk_file, tpkx_file))
 #' }
 #'
 #' @export
