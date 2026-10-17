@@ -131,5 +131,6 @@ if (requireNamespace("terra", quietly = TRUE)) {
     zoom = 14:15,
     verbose = FALSE
   )
+  unlink(c(tpk_file, tpkx_file))
 }
 ```

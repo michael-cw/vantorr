@@ -148,4 +148,5 @@ bundle <- vantor_offline_package(
   create_shapefiles = TRUE,
   verbose = FALSE
 )
+unlink(bundle$output_dir, recursive = TRUE)
 ```
