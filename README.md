@@ -78,7 +78,7 @@ types:
   `add_vantor_seamlines()`, `add_vantor_imagery()`): Require an **API
   Key** (`maxar_api_key`).
 - **Account Services / Admin APIs** (`vantor_get_usage()`): Require an
-  **OAuth2 Bearer Token** (`username` and `password`), as Vantor’s Admin
+  **OAuth2 Bearer Token** (`username` and `password`), as Vantor's Admin
   APIs do not accept API keys.
 
 You can configure credentials in your `.Renviron` file
