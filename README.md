@@ -78,7 +78,7 @@ types:
   `add_vantor_seamlines()`, `add_vantor_imagery()`): Require an **API
   Key** (`maxar_api_key`).
 - **Account Services / Admin APIs** (`vantor_get_usage()`): Require an
-  **OAuth2 Bearer Token** (`username` and `password`), as Vantor's Admin
+  **OAuth2 Bearer Token** (`username` and `password`), as Vantor’s Admin
   APIs do not accept API keys.
 
 You can configure credentials in your `.Renviron` file
@@ -213,6 +213,21 @@ if (interactive()) {
 See `vignette("shiny-leaflet-integration", package = "vantorr")` or
 visit the [companion website](https://michael-cw.github.io/vantorr/) for
 full documentation.
+
+## Acknowledgments
+
+Parts of the development of this package were co-financed by the Yemen
+Resilience, Recovery, and Reconstruction Trust Fund (Yemen Fund), which
+was established by the World Bank in 2022 as a pooled funding mechanism
+and a partnership platform to support Yemen’s transition over a 10-year
+horizon. The Yemen Fund is supported by the United Kingdom’s Foreign,
+Commonwealth and Development Office, the Kingdom of the Netherlands, the
+Swiss Confederation, and the European Union Delegation to Yemen. The
+author would like to express gratitude for this important and timely
+contribution.
+
+For more information about the Yemen Fund, visit:
+<https://www.worldbank.org/en/programs/the-yemen-fund>
 
 ## License
 
