@@ -1,3 +1,9 @@
+## Resubmission
+
+This is a resubmission. In this version I have:
+
+* Ensured that all `graphics::par()` and `setwd()` calls are immediately preceded by saving the current settings (`oldpar <- graphics::par(no.readonly = TRUE)` and `oldwd <- getwd()`) and registering an immediate `on.exit()` handler to restore them upon function exit.
+
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note

@@ -765,6 +765,8 @@ vantor_field_atlas <- function(grid,
   on.exit(grDevices::dev.off(), add = TRUE)
 
   # --- Page 1: Overview Index Sheet ---
+  oldpar <- graphics::par(no.readonly = TRUE)
+  on.exit(graphics::par(oldpar), add = TRUE, after = FALSE)
   graphics::par(mar = c(3.5, 3.5, 3.5, 1.5))
   ov_bbox <- as.numeric(sf::st_bbox(sf::st_buffer(sf::st_union(grid_3857), dist = buffer_m)))
 
@@ -1097,13 +1099,11 @@ vantor_offline_package <- function(output_dir = tempfile(pattern = "vantor_offli
     if (file.exists(shapefile_zip_path)) unlink(shapefile_zip_path)
     shp_files <- list.files(shp_staging, full.names = FALSE)
     if (length(shp_files) > 0L) {
-      old_wd <- getwd()
-      tryCatch(
-        {
-          setwd(shp_staging)
-          utils::zip(zipfile = shapefile_zip_path, files = shp_files, extras = "-q -X")
-        },
-        finally = setwd(old_wd)
+      .zip_from_dir(
+        dir = shp_staging,
+        zipfile = shapefile_zip_path,
+        files = shp_files,
+        extras = "-q -X"
       )
     }
   }
@@ -1386,14 +1386,11 @@ vantor_write_tpk <- function(x = NULL,
   if (file.exists(output_file)) unlink(output_file)
   abs_output <- file.path(normalizePath(out_dir, mustWork = TRUE), basename(output_file))
 
-  old_wd <- getwd()
-  tryCatch(
-    {
-      setwd(staging_dir)
-      rel_files <- list.files(".", recursive = TRUE, all.files = FALSE)
-      utils::zip(zipfile = abs_output, files = rel_files, extras = "-0 -q -X")
-    },
-    finally = setwd(old_wd)
+  .zip_from_dir(
+    dir = staging_dir,
+    zipfile = abs_output,
+    files = NULL,
+    extras = "-0 -q -X"
   )
 
   suso_zip_path <- NULL
@@ -1494,14 +1491,32 @@ vantor_write_tpk <- function(x = NULL,
 
   tmp_png <- tempfile(fileext = ".png")
   on.exit(unlink(tmp_png), add = TRUE)
+  .write_rgb_array_png(arr, tmp_png)
+
+  readBin(tmp_png, what = "raw", n = file.info(tmp_png)$size)
+}
+
+#' @noRd
+.write_rgb_array_png <- function(arr, tmp_png) {
   grDevices::png(filename = tmp_png, width = 256L, height = 256L, units = "px", bg = "white")
+  on.exit(grDevices::dev.off(), add = TRUE)
+  oldpar <- graphics::par(no.readonly = TRUE)
+  on.exit(graphics::par(oldpar), add = TRUE, after = FALSE)
   graphics::par(mar = c(0, 0, 0, 0), xaxs = "i", yaxs = "i")
   graphics::plot.new()
   graphics::plot.window(xlim = c(0, 1), ylim = c(0, 1), asp = NA)
   graphics::rasterImage(grDevices::as.raster(arr), 0, 0, 1, 1, interpolate = FALSE)
-  grDevices::dev.off()
+}
 
-  readBin(tmp_png, what = "raw", n = file.info(tmp_png)$size)
+#' @noRd
+.zip_from_dir <- function(dir, zipfile, files = NULL, extras = "-q -X") {
+  oldwd <- getwd()
+  on.exit(setwd(oldwd), add = TRUE)
+  setwd(dir)
+  if (is.null(files)) {
+    files <- list.files(".", recursive = TRUE, all.files = FALSE)
+  }
+  utils::zip(zipfile = zipfile, files = files, extras = extras)
 }
 
 #' @noRd
