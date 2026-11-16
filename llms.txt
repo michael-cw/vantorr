@@ -57,7 +57,8 @@ with `sf`, `terra`, `stars`, `leaflet`, and `shiny`.
 
 ## Installation
 
-Once available on CRAN, you can install `vantorr` with:
+You can install the released version of `vantorr` from
+[CRAN](https://CRAN.R-project.org/package=vantorr) with:
 
 ``` r
 
