@@ -34,7 +34,7 @@ The `vantorr` package provides an R interface to the [Maxar / Vantor Hub APIs](h
 
 ## Installation
 
-Once available on CRAN, you can install `vantorr` with:
+You can install the released version of `vantorr` from [CRAN](https://CRAN.R-project.org/package=vantorr) with:
 
 ```r
 install.packages("vantorr")
