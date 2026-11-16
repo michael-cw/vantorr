@@ -1,3 +1,5 @@
+# vantorr (development version)
+
 # vantorr 0.3.0
 
 * Production of Fieldwork Resources for Survey Data Collection (`vantor_fieldwork.R`):

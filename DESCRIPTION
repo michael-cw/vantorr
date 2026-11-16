@@ -1,6 +1,6 @@
 Package: vantorr
 Title: Access 'Maxar' and 'Vantor' Satellite Imagery APIs
-Version: 0.3.0
+Version: 0.3.0.9000
 Authors@R: 
     person("Michael", "Wild", , "michael.wild@me.com", role = c("aut", "cre"))
 Description: Provides a client for the 'Maxar' and 'Vantor' 'REST' and 'OGC'
@@ -40,4 +40,3 @@ Suggests:
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
-
