@@ -2,6 +2,8 @@
 
 ## vantorr 0.3.0
 
+CRAN release: 2026-11-13
+
 - Production of Fieldwork Resources for Survey Data Collection
   (`vantor_fieldwork.R`):
   - **Survey Index Grids & Enumeration Area Partitioning**:
