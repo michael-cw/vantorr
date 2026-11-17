@@ -1,5 +1,7 @@
 # Changelog
 
+## vantorr (development version)
+
 ## vantorr 0.3.0
 
 CRAN release: 2026-11-13

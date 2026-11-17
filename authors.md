@@ -7,15 +7,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/michael-cw/vantorr/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/michael-cw/vantorr/blob/dev/DESCRIPTION)
 
 Wild M (2026). *vantorr: Access 'Maxar' and 'Vantor' Satellite Imagery
-APIs*. R package version 0.3.0, <https://github.com/michael-cw/vantorr>.
+APIs*. R package version 0.3.0.9000,
+<https://github.com/michael-cw/vantorr>.
 
     @Manual{,
       title = {vantorr: Access 'Maxar' and 'Vantor' Satellite Imagery APIs},
       author = {Michael Wild},
       year = {2026},
-      note = {R package version 0.3.0},
+      note = {R package version 0.3.0.9000},
       url = {https://github.com/michael-cw/vantorr},
     }
